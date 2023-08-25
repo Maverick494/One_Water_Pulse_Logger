@@ -6,6 +6,7 @@ Created on Tue Aug  8 20:33:28 2023
 @author: Justin
 """
 
+from botocore.client import Config
 import boto3
 import ftplib
 import json
@@ -15,80 +16,85 @@ from datetime import datetime as dt
 
 
 class Settings:
-    
-    def __init__(self, **kwargs):
-        print(kwargs.site_name, kwargs.data_output_choice, kwargs.sensor_name)
-      
-        if kwargs.email_address is not None:
-            self.email_address = kwargs.email_address
-        else:
-            self.email_address = 'ryan@epiccleantec.com'
-        
-        self.json_data = {}
-                    
-    def update_settings(**kwargs):
+    settings_directory = '/home/ect-one-user/Desktop/One_Water_Pulse_Logger/config/'
+    json_data = {}
+    settings_filename = ''
+
+    @staticmethod    
+    def update_settings(kwargs):
+
+        settings_filename = '{}_settings.json'.format(kwargs['Site Name'])
 
         # Create a dictionary to represent the JSON structure
         json_data = {
             'Settings': {
-                'Site Name': kwargs.site_name,
+                'Site Name': kwargs['Site Name'],
                 'Sensor': {
-                    'Name': kwargs.sensor_name,
-                    'K Factor': kwargs.k_factor,
-                    'Standard Unit': kwargs.standard_unit,
-                    'Desired Unit': kwargs.desired_unit
+                    'Name': kwargs['Name'],
+                    'K Factor': kwargs['K Factor'],
+                    'Standard Unit': kwargs['standard_unit'],
+                    'Desired Unit': kwargs['Desired Unit'],
                 },
                 'Data Output': {
-                    'Location': kwargs.data_output_choice.lower()
+                    'Location': kwargs['Location'].lower()
                 }
             }
         }
         
         # Add data based on data_output_choice
         if kwargs.data_output_choice.lower() == 's3':
-            json_data['Settings']['Location']['s3_bucket'] = kwargs.s3_bucket
-            json_data['Settings']['Location']['s3_key'] = kwargs.s3_key
-            json_data['Settings']['Location']['auth'] = {
-                'Access Key': kwargs.access_key,
-                'Secret Key': kwargs.secret_key
+            json_data['Settings']['Location']['Bucket'] = kwargs['Bucket']
+            json_data['Settings']['Location']['Prefix'] = kwargs['Prefix']
+            json_data['Settings']['Location']['Key'] = kwargs['Key']
+            json_data['Settings']['Location']['Auth'] = {
+                'Access Key': kwargs['Access Key'],
+                'Secret Key': kwargs['Secret Key']
             }
             if kwargs.role_arn is not None:
-                json_data['settings']['data_output']['auth']['role'] = kwargs.role_arn
+                json_data['Settings']['Data Output']['Auth']['Role'] = kwargs['Role']
+
         elif kwargs.data_output_choice.lower() == 'ftp':
-            json_data['Settings']['Location']['host'] = kwargs.host
-            json_data['Settings']['Location']['port'] = kwargs.port
-            json_data['Settings']['Location']['directory'] = kwargs.directory
-            json_data['Settings']['Location']['auth'] = {
-                'Username': kwargs.username,
-                'Password': kwargs.password
+            json_data['Settings']['Location']['Host'] = kwargs['Host']
+            json_data['Settings']['Location']['Port'] = kwargs['Port']
+            json_data['Settings']['Location']['Directory'] = kwargs['Directory']
+            json_data['Settings']['Location']['Auth'] = {
+                'Username': kwargs['Username'],
+                'Password': kwargs['Password']
             }
 
-        return json_data
+        elif kwargs.data_output_choice.lower() == 'local':
 
-    def save_to_json(self):
+            if kwargs.email_address is not None:
+                json_data['Settings']['Email Address'] = kwargs['Email Address']
+            else:
+                json_data['Settings']['Email Address'] = 'ryan@epiccleantec.com'
 
-        json_to_write = self.json_data
+        return json_data, settings_filename
+
+    @staticmethod
+    def save_to_json():
+
+        json_to_write = json_data
 
         # Serialize the JSON data to a file
-        with open(self.settings_directory + self.settings_filename, 'w') as sf:
+        with open(settings_directory + settings_filename, 'w') as sf:
             json.dump(json_to_write, sf, indent=4)  # Use json.dump() to serialize the data
 
         sf.close()
         return {'Settings' : 'Saved to file'}
 
+    @classmethod
     def retrieve_settings(cls):
-
+        settings = None
         try:
-            with open(cls.settings_directory+cls.settings_filename, 'r') as json:
+            with open(cls.settings_directory + cls.settings_filename, 'r') as json:
                 settings = json.load(json)
             
             json.close()
-            
+        
             return settings
-
-        except (FileNotFoundError, IsADirectoryError) as e:
-            return None
-
+        except (IsADirectoryError, FileNotFoundError):
+            return settings
 
 class StorageHandler:
     def __init__(self):
