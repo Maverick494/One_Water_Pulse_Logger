@@ -60,7 +60,7 @@ class LoggerSetupPage:
     def return_to_main(self):
 
         self.main_app.app.show()
-        self.main_app.get_settings()
+        self.main_app.check_json()
         self.parent.destroy()
 
     def create_input_list(self):
@@ -88,32 +88,36 @@ class LoggerSetupPage:
         if self.config_selection.value == 'Sensor Config':
 
             self.sn_label = Text(self.mid_box, text='Sensor Name:',
-                align='right', grid=[0, 1])
+                align='left', grid=[0, 1])
             self.sn_label.text_color = 'white'
-            self.sn_input = TextBox(self.mid_box, grid=[1, 1], width=30)
+            self.sn_input = TextBox(self.mid_box, grid=[1, 1], width=30,
+                align='left',)
             self.sn_input.text_color = 'white'
 
             self.current_row += 1
             
             self.kf_label = Text(self.mid_box, text='K Factor:',
-                align='right', grid=[0, 2])
+                align='left', grid=[0, 2])
             self.kf_label.text_color = 'white'
-            self.kf_input = TextBox(self.mid_box, grid=[1, 2], width=10)
+            self.kf_input = TextBox(self.mid_box, grid=[1, 2], width=10,
+            align='left',)
             self.kf_input.text_color = 'white'
 
             self.current_row += 1
             
             self.su_label = Text(self.mid_box, text='Sensor Units:',
-                        align='right', grid=[0, 3])
+                        align='left', grid=[0, 3])
             self.su_label.text_color = 'white'
-            self.su_input = TextBox(self.mid_box, grid=[1, 3], width=10)
+            self.su_input = TextBox(self.mid_box, grid=[1, 3], width=10,
+            align='left',)
             self.su_input.text_color = 'white'
 
             self.current_row += 1
             
             self.du_label = Text(self.mid_box, text='Desired Units:', grid=[0, 4])
             self.du_label.text_color = 'white'
-            self.du_input = TextBox(self.mid_box, grid=[1, 4], width=10)
+            self.du_input = TextBox(self.mid_box, grid=[1, 4], width=10,
+            align='left',)
             self.du_input.text_color = 'white'
 
             self.current_row += 1
@@ -317,60 +321,85 @@ class LoggerSetupPage:
     def import_settings(self, kwargs):
         if kwargs['Location'] == 's3':
             self.data_output_choice.value = 's3'
-            self.s3_bucket_input.value = kwargs['Bucket']
-            self.s3_prefix_input.value = kwargs['Prefix']
-            self.s3_key_input.value = kwargs['Key']
-            self.s3_ak_input.value = bd(kwargs['Access Key']).decode('utf-8')
-            self.s3_sk_input.value = bd(kwargs['Secret Key']).decode('utf-8')
-            self.s3_role_input.value = kwargs['Role']
+            self.s3_bucket_input.value = kwargs['Settings']['Data Output']['Bucket']
+            self.s3_prefix_input.value = kwargs['Settings']['Data Output']['Prefix']
+            self.s3_key_input.value = kwargs['Settings']['Data Output']['Key']
+            self.s3_ak_input.value = bd(kwargs['Settings']['Data Output']\
+                ['Auth']['Access Key']).decode('utf-8')
+            self.s3_sk_input.value = bd(kwargs['Settings']['Data Output']\
+                ['Auth']['Secret Key']).decode('utf-8')
+            self.s3_role_input.value = kwargs['Settings']['Data Output']\
+                ['Auth']['Role']
         elif kwargs['Location'] == 'ftp':
             self.data_output_choice.value = 'ftp'
-            self.ftp_host_input.value = kwargs['Host']
-            self.ftp_port_input.value = kwargs['Port']
-            self.ftp_un_input.value = bd(kwargs['Username']).decode('utf-8')
-            self.ftp_pwd_input.value = bd(kwargs['Password']).decode('utf-8')
-            self.ftp_dir_input.value = kwargs['Directory']
+            self.ftp_host_input.value = kwargs['Settings']['Data Output']['Host']
+            self.ftp_port_input.value = kwargs['Settings']['Data Output']['Port']
+            self.ftp_un_input.value = bd(kwargs['Settings']['Data Output']\
+                ['Auth']['Username']).decode('utf-8')
+            self.ftp_pwd_input.value = bd(kwargs['Settings']['Data Output']\
+                ['Auth']['Password']).decode('utf-8')
+            self.ftp_dir_input.value = kwargs['Settings']['Data Output']['Directory']
         else:
             self.data_output_choice.value = 'local'
             self.email_input.value = kwargs['Email Address']
         
-        self.sn_input.value = kwargs['Name']
-        self.kf_input.value = kwargs['K Factor']
-        self.su_input.value = kwargs['Standard Unit']
-        self.du_input.value = kwargs['Desired Unit']
+        self.sn_input.value = kwargs['Settings']['Sensor']['Name']
+        self.kf_input.value = kwargs['Settings']['Sensor']['K Factor']
+        self.su_input.value = kwargs['Settings']['Sensor']['Standard Unit']
+        self.du_input.value = kwargs['Settings']['Sensor']['Desired Unit']
     
     def save_settings(self):
 
         if self.config_selection.value == 'Data Output Config':
             if self.data_output_choice.value == 's3':
-                self.settings_dict.update(
-                    {'Location': self.data_output_choice.value,
-                    'Bucket': self.s3_bucket_input.value,
-                    'Prefeix': self.s3_prefix_input.value,
-                    'Key': self.s3_key_input.value,
-                    'Access Key': be(self.s3_ak_input.value.encode('utf-8')),
-                    'Secret Key': be(self.s3_sk_input.value.encode('utf-8')),
-                    'Role': self.s3_role_input.value})
+                self.settings_dict.update({
+                    'Settings': {
+                        'Data Ouput': {
+                            'Location': self.data_output_choice.value,
+                            'Bucket': self.s3_bucket_input.value,
+                            'Prefeix': self.s3_prefix_input.value,
+                            'Key': self.s3_key_input.value,
+                            'Access Key': be(self.s3_ak_input.value.encode('utf-8')),
+                            'Secret Key': be(self.s3_sk_input.value.encode('utf-8')),
+                            'Role': self.s3_role_input.value
+                        }
+                    }
+                })
 
             elif self.data_output_choice.value == 'ftp':
-                self.settings_dict.update(
-                    {'Location': self.data_output_choice.value,
-                    'Host': self.ftp_host_input.value, 
-                    'Port': self.ftp_port_input.value,
-                    'Username': be(self.ftp_un_input.value.encode('utf-8')),
-                    'Password': be(self.ftp_pwd_input.value.encode('utf-8')),
-                    'Directory': self.ftp_dir_input.value})
+                self.settings_dict.update({
+                    'Settings': {
+                        'Data Ouput': {
+                            'Location': self.data_output_choice.value,
+                            'Host': self.ftp_host_input.value, 
+                            'Port': self.ftp_port_input.value,
+                            'Username': be(self.ftp_un_input.value.encode('utf-8')),
+                            'Password': be(self.ftp_pwd_input.value.encode('utf-8')),
+                            'Directory': self.ftp_dir_input.value
+                        }
+                    }
+                })
             else:
-                self.settings_dict.update(
-                {'Location': self.data_output_choice.value,
-                'Email Address': self.email_input.value})
+                self.settings_dict.update({
+                    'Settings': {
+                        'Data Ouput': {
+                            'Location': self.data_output_choice.value,
+                            'Email Address': self.email_address_input.value
+                        }
+                    }
+                })
 
         elif self.config_selection.value == 'Sensor Config':
-            self.settings_dict.update(
-                {'Name': self.sn_input.value,
-                'K Factor': self.kf_input.value,
-                'Standard Unit': self.su_input.value,
-                'Desired Unit': self.du_input.value})
+            self.settings_dict.update({
+                'Settings': {
+                    'Sensor': {
+                        'Name': self.sn_input.value,
+                        'K Factor': self.kf_input.value,
+                        'Standard Unit': self.su_input.value,
+                        'Desired Unit': self.du_input.value
+                    }
+                }
+            })
             
         Settings.update_settings(self.settings_dict)
         info('success', 'settings staged.')

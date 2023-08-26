@@ -8,8 +8,10 @@ Created on Tue Aug  8 20:33:28 2023
 
 from botocore.client import Config
 import boto3
+import collections.abc
 import ftplib
 import json
+import logging
 
 from base64 import b64decode as bd
 from datetime import datetime as dt
@@ -17,74 +19,58 @@ from datetime import datetime as dt
 
 class Settings:
     settings_directory = '/home/ect-one-user/Desktop/One_Water_Pulse_Logger/config/'
-    json_data = {}
     settings_filename = ''
-
-    @staticmethod    
-    def update_settings(kwargs):
-
-        settings_filename = '{}_settings.json'.format(kwargs['Site Name'])
-
-        # Create a dictionary to represent the JSON structure
-        json_data = {
+    json_dict = {
             'Settings': {
-                'Site Name': kwargs['Site Name'],
+                'Site Name': None,
                 'Sensor': {
-                    'Name': kwargs['Name'],
-                    'K Factor': kwargs['K Factor'],
-                    'Standard Unit': kwargs['standard_unit'],
-                    'Desired Unit': kwargs['Desired Unit'],
-                },
+
+                    },
                 'Data Output': {
-                    'Location': kwargs['Location'].lower()
+                    
+                    },
+                'Email Address': {
+
+                    }
                 }
             }
-        }
+    json_data = {}
+
+    @classmethod   
+    def update_settings(cls, d):
         
-        # Add data based on data_output_choice
-        if kwargs.data_output_choice.lower() == 's3':
-            json_data['Settings']['Location']['Bucket'] = kwargs['Bucket']
-            json_data['Settings']['Location']['Prefix'] = kwargs['Prefix']
-            json_data['Settings']['Location']['Key'] = kwargs['Key']
-            json_data['Settings']['Location']['Auth'] = {
-                'Access Key': kwargs['Access Key'],
-                'Secret Key': kwargs['Secret Key']
-            }
-            if kwargs.role_arn is not None:
-                json_data['Settings']['Data Output']['Auth']['Role'] = kwargs['Role']
+        if cls.json_data is None:
+            cls.json_data = cls.json_dict | d
+        else :
+            cls.json_data = cls.json_data | d
 
-        elif kwargs.data_output_choice.lower() == 'ftp':
-            json_data['Settings']['Location']['Host'] = kwargs['Host']
-            json_data['Settings']['Location']['Port'] = kwargs['Port']
-            json_data['Settings']['Location']['Directory'] = kwargs['Directory']
-            json_data['Settings']['Location']['Auth'] = {
-                'Username': kwargs['Username'],
-                'Password': kwargs['Password']
-            }
+    @classmethod
+    def check_json(cls):
+        print(cls.json_data)
+        try:
+            if cls.json_data['Settings']['Site Name'] is not None \
+                and cls.json_data['Settings']['Sensor']['Name'] is not None \
+                and cls.json_data['Settings']['Data Output']['Location'] is not None:
+                return True
+        except:
+            print(cls.json_data)
+            return False
 
-        elif kwargs.data_output_choice.lower() == 'local':
-
-            if kwargs.email_address is not None:
-                json_data['Settings']['Email Address'] = kwargs['Email Address']
-            else:
-                json_data['Settings']['Email Address'] = 'ryan@epiccleantec.com'
-
-        return json_data, settings_filename
-
-    @staticmethod
-    def save_to_json():
-
-        json_to_write = json_data
+    @classmethod
+    def save_to_json(cls):
+        
+        cls.settings_filename = cls.json_data['Settings']['Site Name']
 
         # Serialize the JSON data to a file
         with open(settings_directory + settings_filename, 'w') as sf:
-            json.dump(json_to_write, sf, indent=4)  # Use json.dump() to serialize the data
+            json.dump(cls.json_data, sf, indent=4)  # Use json.dump() to serialize the data
 
         sf.close()
         return {'Settings' : 'Saved to file'}
 
     @classmethod
     def retrieve_settings(cls):
+
         settings = None
         try:
             with open(cls.settings_directory + cls.settings_filename, 'r') as json:
