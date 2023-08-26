@@ -32,17 +32,20 @@ class MainApp:
                                                  r'/assets/Epic_Clean_Tec_Brand.png',
                              align='left', grid=[0, 0])
         self.header = Text(self.top_box, text=dt.now().strftime('%Y-%m-%d %H:%M:%S'),
-                           align='right', grid=[1, 0])
-        self.header.width = 90
+                           align='right', grid=[1, 0], width='fill')
         self.header.text_color = 'white'
-
-        self.welcome_text = Text(self.top_box, text="Welcome to the Epic CleanTec Pulse Logger Prototype.",
-                                 size=14, grid=[0, 1, 2, 1])
+        self.header.width = 90
+        
+        self.welcome_box = Box(self.app, layout='grid', align='top')
+        self.welcome_text = Text(self.welcome_box, text="Welcome to the Epic CleanTec Pulse Logger Prototype.",
+                                 size=14, grid=[0, 0])
         self.welcome_text.text_color = 'white'
+        self.welcome_text.width = 90
 
-        self.welcome_text_l2 = Text(self.top_box, text="Please send any feedback to JPulley4396@Gmail.com",
-                                    size=14, grid=[0, 2, 2, 1])
+        self.welcome_text_l2 = Text(self.welcome_box, text="Please send any feedback to JPulley4396@Gmail.com",
+                                    size=14, grid=[0, 1])
         self.welcome_text_l2.text_color = 'white'
+        self.welcome_text_l2.width = 90
 
         # Middle of Screen box
         self.box = Box(self.app, layout='grid', align='top')
@@ -74,7 +77,7 @@ class MainApp:
         self.bottom_box = Box(self.app, layout='grid', align='bottom')
         self.open_ds_button = PushButton(self.bottom_box, text='Logger Setup',
                                          command=lambda: self.open_window(
-                                             DataOutputSetupPage, 'Logger Setup'),
+                                             LoggerSetupPage, 'Logger Setup'),
                                          align='left', grid=[0, 0])
         self.open_ds_button.text_color = 'white'
         self.open_ds_button.hide()
@@ -92,41 +95,48 @@ class MainApp:
                                        align='left', grid=[2, 0])
         self.close_button.text_color = 'white'
 
-        info('Site', 'Enter Site Name to get started.')
-
     def run(self):
 
         self.app.display()
         
     def get_settings(self):
+
         self.settings = Settings.retrieve_settings()
-        self.sv_stg_to_file.hide()
         print(self.settings)
         if not isinstance(self.settings, type(None)):
             load_settings = yesno('Load Settings', 'Settings file found. Load settings?')
             if load_settings:
                 self.site_name.value = self.settings['Site Name']
                 self.logger_setup.import_settings(self.settings)
-        elif self.settings['Settings']['Site Name'] == None\
-            or self.settings['Settings']['Sensor']['Name'] == None\
-            or self.settings['Settings']['Data Ouput']['Location'] == None:
-            info('Config', 'Site Name, Sensor Name, or Storage Location not set.')
-        else:
+        elif isinstance(self.settings, type(None)):
+            info('Config', 'No settings file found. Please configure settings.')
+
+    def check_json(self):
+
+        self.local_settings = Settings.check_json()
+        print(self.local_settings)
+        if self.local_settings:
             info('Config', 'Settings ready for save.')
             self.sv_stg_to_file.show()
-                
+        else:
+            self.sv_stg_to_file.hide()
+
     def site_lock(self):
 
         if self.submit_site_text == 'Submit':
             self.site_name.disable()
             self.submit_site_text = 'Alter Site Name'
+            Settings.update_settings({
+                'Settings':
+                    {'Site Name': self.site_name.value}
+                })
+            self.get_settings()
             self.open_ds_button.show()
             self.open_db_button.show()
 
             # Add a log statement
             log.info('Site name updated to {0}'.format(self.site_name.value))
 
-            Settings.update_settings({'Site Name': self.site_name.value})
         else:
             self.site_name.enable()
             self.submit_site_text = 'Submit'
@@ -146,7 +156,7 @@ class MainApp:
         #new_window.tk.attributes('-fullscreen', True)
         
         # Create an instance of DataDisplayPage
-        open_page = module(new_window, self, self.logger_setup)
+        open_page = module(new_window, self)
         new_window.show()
 
     def exit_pgm(self):
@@ -158,5 +168,5 @@ class MainApp:
 
 if __name__ == "__main__":
     app = MainApp()
-    app.get_settings()
+    app.check_json()
     app.run()
