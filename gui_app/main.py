@@ -13,10 +13,12 @@ import sys
 from data_output_setup_page import LoggerSetupPage
 from logging_data_display import DataDisplayPage
 import logging as log
-from utilities import Settings
+from utilities import LoggerSettings
 
 
 class MainApp:
+
+    
     def __init__(self):
 
         self.submit_site_text = 'Submit'
@@ -68,9 +70,12 @@ class MainApp:
         
         self.spacer = Text(self.box, text='', grid=[0, 3], width='fill')
         
-        self.sv_stg_to_file = PushButton(self.box, text='Save Settings File',
-        command=Settings.save_to_json, grid=[0, 4, 3, 1])
+        self.sv_box = Box(self.app, layout='auto', align='top')
+        self.sv_stg_to_file = PushButton(self.sv_box, text='Save Settings File',
+        command=LoggerSettings.save_to_json)
         self.sv_stg_to_file.text_color = 'white'
+        self.sv_stg_to_file.width = 50
+        self.sv_stg_to_file.hide()
         
 
         # Create a button holder at bottom of screen
@@ -101,7 +106,7 @@ class MainApp:
         
     def get_settings(self):
 
-        self.settings = Settings.retrieve_settings()
+        self.settings = LoggerSettings.retrieve_settings()
         print(self.settings)
         if not isinstance(self.settings, type(None)):
             load_settings = yesno('Load Settings', 'Settings file found. Load settings?')
@@ -111,25 +116,20 @@ class MainApp:
         elif isinstance(self.settings, type(None)):
             info('Config', 'No settings file found. Please configure settings.')
 
-    def check_json(self):
+    def verify_json(self):
 
-        self.local_settings = Settings.check_json()
+        self.local_settings = LoggerSettings.check_json()
         print(self.local_settings)
-        if self.local_settings:
+        if all(self.local_settings):
             info('Config', 'Settings ready for save.')
             self.sv_stg_to_file.show()
-        else:
-            self.sv_stg_to_file.hide()
 
     def site_lock(self):
 
         if self.submit_site_text == 'Submit':
             self.site_name.disable()
             self.submit_site_text = 'Alter Site Name'
-            Settings.update_settings({
-                'Settings':
-                    {'Site Name': self.site_name.value}
-                })
+            LoggerSettings.update_settings({"Site Name": self.site_name.value})
             self.get_settings()
             self.open_ds_button.show()
             self.open_db_button.show()
@@ -168,5 +168,4 @@ class MainApp:
 
 if __name__ == "__main__":
     app = MainApp()
-    app.check_json()
     app.run()

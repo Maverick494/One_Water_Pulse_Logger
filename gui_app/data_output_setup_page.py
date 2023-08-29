@@ -10,7 +10,7 @@ from base64 import b64encode as be
 from base64 import b64decode as bd
 from datetime import datetime as dt
 from guizero import Box, Combo, info, Picture, ListBox, PushButton, Text, TextBox, Window
-from utilities import Settings
+from utilities import LoggerSettings
 
 class LoggerSetupPage:
 
@@ -60,7 +60,7 @@ class LoggerSetupPage:
     def return_to_main(self):
 
         self.main_app.app.show()
-        self.main_app.check_json()
+        self.main_app.verify_json()
         self.parent.destroy()
 
     def create_input_list(self):
@@ -318,90 +318,82 @@ class LoggerSetupPage:
             self.save_settings_btn
             ])
                 
-    def import_settings(self, kwargs):
-        if kwargs['Location'] == 's3':
+    def import_settings(self, d):
+        if d['Data Output']['Location'] == 's3':
             self.data_output_choice.value = 's3'
-            self.s3_bucket_input.value = kwargs['Settings']['Data Output']['Bucket']
-            self.s3_prefix_input.value = kwargs['Settings']['Data Output']['Prefix']
-            self.s3_key_input.value = kwargs['Settings']['Data Output']['Key']
-            self.s3_ak_input.value = bd(kwargs['Settings']['Data Output']\
+            self.s3_bucket_input.value = d['Data Output']['Bucket']
+            self.s3_prefix_input.value = d['Data Output']['Prefix']
+            self.s3_key_input.value = d['Data Output']['Key']
+            self.s3_ak_input.value = bd(d['Data Output']\
                 ['Auth']['Access Key']).decode('utf-8')
-            self.s3_sk_input.value = bd(kwargs['Settings']['Data Output']\
+            self.s3_sk_input.value = bd(d['Data Output']\
                 ['Auth']['Secret Key']).decode('utf-8')
-            self.s3_role_input.value = kwargs['Settings']['Data Output']\
+            self.s3_role_input.value = d['Data Output']\
                 ['Auth']['Role']
-        elif kwargs['Location'] == 'ftp':
+        elif d['Data Output']['Location'] == 'ftp':
             self.data_output_choice.value = 'ftp'
-            self.ftp_host_input.value = kwargs['Settings']['Data Output']['Host']
-            self.ftp_port_input.value = kwargs['Settings']['Data Output']['Port']
-            self.ftp_un_input.value = bd(kwargs['Settings']['Data Output']\
+            self.ftp_host_input.value = d['Data Output']['Host']
+            self.ftp_port_input.value = d['Data Output']['Port']
+            self.ftp_un_input.value = bd(d['Data Output']\
                 ['Auth']['Username']).decode('utf-8')
-            self.ftp_pwd_input.value = bd(kwargs['Settings']['Data Output']\
+            self.ftp_pwd_input.value = bd(d['Data Output']\
                 ['Auth']['Password']).decode('utf-8')
-            self.ftp_dir_input.value = kwargs['Settings']['Data Output']['Directory']
+            self.ftp_dir_input.value = d['Data Output']['Directory']
         else:
             self.data_output_choice.value = 'local'
-            self.email_input.value = kwargs['Email Address']
+            self.email_input.value = d['Email Address']
         
-        self.sn_input.value = kwargs['Settings']['Sensor']['Name']
-        self.kf_input.value = kwargs['Settings']['Sensor']['K Factor']
-        self.su_input.value = kwargs['Settings']['Sensor']['Standard Unit']
-        self.du_input.value = kwargs['Settings']['Sensor']['Desired Unit']
+        self.sn_input.value = d['Sensor']['Name']
+        self.kf_input.value = d['Sensor']['K Factor']
+        self.su_input.value = d['Sensor']['Standard Unit']
+        self.du_input.value = d['Sensor']['Desired Unit']
     
     def save_settings(self):
 
-        if self.config_selection.value == 'Data Output Config':
-            if self.data_output_choice.value == 's3':
+        if self.config_selection.value == "Data Output Config":
+            if self.data_output_choice.value == "s3":
                 self.settings_dict.update({
-                    'Settings': {
-                        'Data Ouput': {
-                            'Location': self.data_output_choice.value,
-                            'Bucket': self.s3_bucket_input.value,
-                            'Prefeix': self.s3_prefix_input.value,
-                            'Key': self.s3_key_input.value,
-                            'Access Key': be(self.s3_ak_input.value.encode('utf-8')),
-                            'Secret Key': be(self.s3_sk_input.value.encode('utf-8')),
-                            'Role': self.s3_role_input.value
-                        }
+                    "Data Output":{
+                        "Location": self.data_output_choice.value,
+                        "Bucket": self.s3_bucket_input.value,
+                        "Prefeix": self.s3_prefix_input.value,
+                        "Key": self.s3_key_input.value,
+                        "Access Key": be(self.s3_ak_input.value.encode("utf-8")),
+                        "Secret Key": be(self.s3_sk_input.value.encode("utf-8")),
+                        "Role": self.s3_role_input.value
                     }
                 })
 
-            elif self.data_output_choice.value == 'ftp':
+            elif self.data_output_choice.value == "ftp":
                 self.settings_dict.update({
-                    'Settings': {
-                        'Data Ouput': {
-                            'Location': self.data_output_choice.value,
-                            'Host': self.ftp_host_input.value, 
-                            'Port': self.ftp_port_input.value,
-                            'Username': be(self.ftp_un_input.value.encode('utf-8')),
-                            'Password': be(self.ftp_pwd_input.value.encode('utf-8')),
-                            'Directory': self.ftp_dir_input.value
-                        }
+                    "Data Output":{
+                        "Location": self.data_output_choice.value,
+                        "Host": self.ftp_host_input.value, 
+                        "Port": self.ftp_port_input.value,
+                        "Username": be(self.ftp_un_input.value.encode("utf-8")),
+                        "Password": be(self.ftp_pwd_input.value.encode("utf-8")),
+                        "Directory": self.ftp_dir_input.value
                     }
                 })
             else:
                 self.settings_dict.update({
-                    'Settings': {
-                        'Data Ouput': {
-                            'Location': self.data_output_choice.value,
-                            'Email Address': self.email_address_input.value
-                        }
+                    "Data Output":{
+                        "Location": self.data_output_choice.value,
+                        "Email Address": self.email_address_input.value
                     }
                 })
 
-        elif self.config_selection.value == 'Sensor Config':
+        elif self.config_selection.value == "Sensor Config":
             self.settings_dict.update({
-                'Settings': {
-                    'Sensor': {
-                        'Name': self.sn_input.value,
-                        'K Factor': self.kf_input.value,
-                        'Standard Unit': self.su_input.value,
-                        'Desired Unit': self.du_input.value
-                    }
+                "Sensor":{
+                    "Name": self.sn_input.value,
+                    "K Factor": self.kf_input.value,
+                    "Standard Unit": self.su_input.value,
+                    "Desired Unit": self.du_input.value
                 }
             })
             
-        Settings.update_settings(self.settings_dict)
+        LoggerSettings.update_settings(self.settings_dict)
         info('success', 'settings staged.')
         self.return_to_main()
 

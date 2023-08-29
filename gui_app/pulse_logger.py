@@ -15,11 +15,11 @@ import threading
 from datetime import datetime as dt
 from datetime import timedelta as td
 from tinydb import TinyDB, Query
-from utilities import Settings
+from utilities import LoggerSettings
 
 class DataLogger:
     def __init__(self, settings):
-        self.settings = Settings.retrieve_settings()
+        self.settings = LoggerSettings.retrieve_settings()
         self.GPIO_LIST = [22, 23, 24, 25]
         self.GPIO = GPIO  # Initialize GPIO module
         self.GPIO.setmode(GPIO.BCM)  # Use GPIO Numbering Mode
@@ -31,7 +31,7 @@ class DataLogger:
         def logging(self):
             curr_hour = dt.now().hour
             curr_min = dt.now().minute
-            settings = Settings.retrieve_settings()
+            settings = LoggerSettings.retrieve_settings()
 
             # Get settings values
             pulse_per_unit = settings['k_factor']

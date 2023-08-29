@@ -6,6 +6,7 @@ Created on Tue Aug  8 20:33:28 2023
 @author: Justin
 """
 
+from benedict import benedict as bdict
 from botocore.client import Config
 import boto3
 import collections.abc
@@ -17,74 +18,68 @@ from base64 import b64decode as bd
 from datetime import datetime as dt
 
 
-class Settings:
+class LoggerSettings:
+
     settings_directory = '/home/ect-one-user/Desktop/One_Water_Pulse_Logger/config/'
-    settings_filename = ''
-    json_dict = {
-            'Settings': {
-                'Site Name': None,
-                'Sensor': {
-
-                    },
-                'Data Output': {
-                    
-                    },
-                'Email Address': {
-
-                    }
-                }
-            }
+    settings_filename = '_logger_config.json'
     json_data = {}
 
-    @classmethod   
-    def update_settings(cls, d):
-        
-        if cls.json_data is None:
-            cls.json_data = cls.json_dict | d
-        else :
-            cls.json_data = cls.json_data | d
+    @staticmethod
+    def update_settings(d):
+        bdict(LoggerSettings.json_data).merge(d, overwrite=True)
 
     @classmethod
     def check_json(cls):
-        print(cls.json_data)
-        try:
-            if cls.json_data['Settings']['Site Name'] is not None \
-                and cls.json_data['Settings']['Sensor']['Name'] is not None \
-                and cls.json_data['Settings']['Data Output']['Location'] is not None:
-                return True
-        except:
-            print(cls.json_data)
-            return False
-
-    @classmethod
-    def save_to_json(cls):
         
-        cls.settings_filename = cls.json_data['Settings']['Site Name']
+        keys_to_get = ['Site Name', 'Sensor', 'Data Output']
+        keys_exist = []
+        
+        while len(keys_exist) < len(keys_to_get):
+            keys_exist.append(False)
+        
+        for i in range(len(keys_to_get)):
+            if bdict.from_json(cls.json_data)\
+                .search(keys_to_get[i], in_keys=True, in_values=True):        
+                keys_exist[i] = True
 
+        return keys_exist
+
+    @staticmethod
+    def save_to_json():
+        
+        json_file = LoggerSettings.settings_directory + \
+            LoggerSettings.json_data['Settings']['Site Name'] + \
+            LoggerSettings.settings_filename
         # Serialize the JSON data to a file
-        with open(settings_directory + settings_filename, 'w') as sf:
-            json.dump(cls.json_data, sf, indent=4)  # Use json.dump() to serialize the data
+        with open(json_file, 'w') as sf:
+            json.dump(LoggerSettings.json_data, sf, indent=4)  # Use json.dump() to serialize the data
 
         sf.close()
         return {'Settings' : 'Saved to file'}
 
-    @classmethod
-    def retrieve_settings(cls):
-
+    @staticmethod
+    def retrieve_settings():
+        
         settings = None
-        try:
-            with open(cls.settings_directory + cls.settings_filename, 'r') as json:
+
+        try:            
+            json_file = LoggerSettings.settings_directory + \
+                LoggerSettings.json_data['Settings']['Site Name'] + \
+                LoggerSettings.settings_filename
+            with open(json_file, 'r') as json:
                 settings = json.load(json)
             
             json.close()
         
             return settings
-        except (IsADirectoryError, FileNotFoundError):
+
+        except:
             return settings
 
 class StorageHandler:
     def __init__(self):
-        self.settings = Settings.retrieve_settings()
+
+        self.settings = LoggerSettings.retrieve_settings()
 
     def ftp_connection(HOST, PORT, USER, PASS):
 
@@ -159,7 +154,7 @@ class StorageHandler:
         
 
     def save_to_s3(self, data_file):
-        settings = Settings.retrieve_settings()
+        settings = LoggerSettings.retrieve_settings()
         if self.settings['output']['auth']['role'] is not None :
             aws_session = self.set_creds(settings['output']['auth']['access_key'],
                                     settings['output']['auth']['access_key'],
