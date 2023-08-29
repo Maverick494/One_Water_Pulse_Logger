@@ -116,6 +116,29 @@ class MainApp:
         elif isinstance(self.settings, type(None)):
             info('Config', 'No settings file found. Please configure settings.')
 
+        def site_lock(self):
+
+        if self.submit_site_text == 'Submit':
+            self.site_name.disable()
+            self.submit_site_text = 'Alter Site Name'
+            LoggerSettings.update_settings({"Site Name": self.site_name.value})
+            self.get_settings()
+            self.open_ds_button.show()
+
+            # Add a log statement
+            log.info('Site name updated to {0}'.format(self.site_name.value))
+
+        else:
+            self.site_name.enable()
+            self.submit_site_text = 'Submit'
+            self.open_ds_button.hide()
+            self.open_db_button.hide()
+
+            # Add a log statement
+            log.info('Site name updated to {0}'.format(self.site_name.value))
+
+        self.submit_site.text = self.submit_site_text
+        
     def verify_json(self):
 
         self.local_settings = LoggerSettings.check_json()
