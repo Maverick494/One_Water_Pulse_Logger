@@ -107,7 +107,7 @@ class MainApp:
     def get_settings(self):
 
         self.settings = LoggerSettings.retrieve_settings()
-        print(self.settings)
+        
         if not isinstance(self.settings, type(None)):
             load_settings = yesno('Load Settings', 'Settings file found. Load settings?')
             if load_settings:
@@ -119,7 +119,7 @@ class MainApp:
     def verify_json(self):
 
         self.local_settings = LoggerSettings.check_json()
-        print(self.local_settings)
+
         if all(self.local_settings):
             info('Config', 'Settings ready for save.')
             self.sv_stg_to_file.show()
@@ -132,7 +132,6 @@ class MainApp:
             LoggerSettings.update_settings({"Site Name": self.site_name.value})
             self.get_settings()
             self.open_ds_button.show()
-            self.open_db_button.show()
 
             # Add a log statement
             log.info('Site name updated to {0}'.format(self.site_name.value))

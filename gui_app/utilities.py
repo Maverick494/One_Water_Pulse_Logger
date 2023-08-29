@@ -13,7 +13,6 @@ import ftplib
 import json
 import logging
 
-from base64 import b64decode as bd
 from datetime import datetime as dt
 
 
@@ -46,11 +45,12 @@ class LoggerSettings:
     def save_to_json():
         
         json_file = LoggerSettings.settings_directory + \
-            LoggerSettings.json_data['Settings']['Site Name'] + \
+            LoggerSettings.json_data['Site Name'] + \
             LoggerSettings.settings_filename
-        # Serialize the JSON data to a file
+        
+        # Use json to serialize the data and save to file
         with open(json_file, 'w') as sf:
-            json.dump(LoggerSettings.json_data, sf, indent=4)  # Use json.dump() to serialize the data
+            sf.write(json.dumps(LoggerSettings.json_data))
 
         sf.close()
         return {'Settings' : 'Saved to file'}
@@ -62,7 +62,7 @@ class LoggerSettings:
 
         try:            
             json_file = LoggerSettings.settings_directory + \
-                LoggerSettings.json_data['Settings']['Site Name'] + \
+                LoggerSettings.json_data['Site Name'] + \
                 LoggerSettings.settings_filename
             with open(json_file, 'r') as json:
                 settings = json.load(json)
@@ -95,10 +95,10 @@ class StorageHandler:
         return ftp      
     
     def save_to_ftp(self, data_file):
-        conn = self.ftp_connection(self.settings['output']['host'],
-                              self.settings['output']['port'],
-                              self.settings['output']['auth']['username'],
-                              self.settings['output']['auth']['password'])
+        conn = self.ftp_connection(self.settings['Data Output']['Host'],
+                              self.settings['Data Output']['Port'],
+                              self.settings['Data Output']['Auth']['Username'],
+                              self.settings['Data Output']['Auth']['Password'])
         
         with open(data_file, 'rb') as df :                      
             conn.storbinary('STOR', df)
@@ -124,8 +124,8 @@ class StorageHandler:
                 boto3.Session: A session with the assumed role credentials.
             """
             sts_client = boto3.client('sts',
-                                      aws_access_key_id=bd(access_key).decode('utf-8'),
-                                      aws_secret_access_key=bd(secret_key).decode('utf-8'),
+                                      aws_access_key_id=access_key,
+                                      aws_secret_access_key=secret_key,
                                       region_name='us-west-1')
 
             # Assume the role
@@ -145,26 +145,26 @@ class StorageHandler:
             return session
             
         else :
-            s3 = boto3.client('s3', aws_access_key_id=bd(access_key).decode('utf-8'),
-            secret_access_key=bd(secret_key).decode('utf-8'))
+            s3 = boto3.client('s3', aws_access_key_id=access_key,
+            secret_access_key=secret_key)
                                   
             return s3
         
 
     def save_to_s3(self, data_file):
         settings = LoggerSettings.retrieve_settings()
-        if self.settings['output']['auth']['role'] is not None :
-            aws_session = self.set_creds(settings['output']['auth']['access_key'],
-                                    settings['output']['auth']['access_key'],
-                                    settings['output']['auth']['role'])
+        if self.settings['Data Output']['Auth']['Role'] is not None :
+            aws_session = self.set_creds(settings['Data Output']['Auth']['Access Key'],
+                                    settings['Data Output']['Auth']['Secret Key'],
+                                    settings['Data Output']['Auth']['Role'])
                                     
             s3 = aws_session.client('s3', config = boto3.session
                                     .Config(signature_version='s3v4'))
                                     
         else :
            aws_session.upload_file(data_file,
-                                   Bucket = settings['output']['s3_bucket'],
-                                   Key = settings['output']['s3_prefix']
+                                   Bucket = settings['Data Output']['Bucket'],
+                                   Key = settings['Data Output']['Prefix']
                                    + 'dt={}/'.format(dt.strftime(dt.today(),
                                                     '%y%m%d'))
                                    + data_file.split('/')[-1],

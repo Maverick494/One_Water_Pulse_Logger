@@ -6,8 +6,6 @@ Created on Tue Aug  8 20:33:42 2023
 
 """
 
-from base64 import b64encode as be
-from base64 import b64decode as bd
 from datetime import datetime as dt
 from guizero import Box, Combo, info, Picture, ListBox, PushButton, Text, TextBox, Window
 from utilities import LoggerSettings
@@ -60,8 +58,8 @@ class LoggerSetupPage:
     def return_to_main(self):
 
         self.main_app.app.show()
-        self.main_app.verify_json()
         self.parent.destroy()
+        self.main_app.verify_json()
 
     def create_input_list(self):
         
@@ -319,25 +317,26 @@ class LoggerSetupPage:
             ])
                 
     def import_settings(self, d):
+
         if d['Data Output']['Location'] == 's3':
             self.data_output_choice.value = 's3'
             self.s3_bucket_input.value = d['Data Output']['Bucket']
             self.s3_prefix_input.value = d['Data Output']['Prefix']
             self.s3_key_input.value = d['Data Output']['Key']
-            self.s3_ak_input.value = bd(d['Data Output']\
-                ['Auth']['Access Key']).decode('utf-8')
-            self.s3_sk_input.value = bd(d['Data Output']\
-                ['Auth']['Secret Key']).decode('utf-8')
+            self.s3_ak_input.value = d['Data Output']\
+                ['Auth']['Access Key']
+            self.s3_sk_input.value = d['Data Output']\
+                ['Auth']['Secret Key']
             self.s3_role_input.value = d['Data Output']\
                 ['Auth']['Role']
         elif d['Data Output']['Location'] == 'ftp':
             self.data_output_choice.value = 'ftp'
             self.ftp_host_input.value = d['Data Output']['Host']
             self.ftp_port_input.value = d['Data Output']['Port']
-            self.ftp_un_input.value = bd(d['Data Output']\
-                ['Auth']['Username']).decode('utf-8')
-            self.ftp_pwd_input.value = bd(d['Data Output']\
-                ['Auth']['Password']).decode('utf-8')
+            self.ftp_un_input.value = d['Data Output']\
+                ['Auth']['Username']
+            self.ftp_pwd_input.value = d['Data Output']\
+                ['Auth']['Password']
             self.ftp_dir_input.value = d['Data Output']['Directory']
         else:
             self.data_output_choice.value = 'local'
@@ -358,8 +357,8 @@ class LoggerSetupPage:
                         "Bucket": self.s3_bucket_input.value,
                         "Prefeix": self.s3_prefix_input.value,
                         "Key": self.s3_key_input.value,
-                        "Access Key": be(self.s3_ak_input.value.encode("utf-8")),
-                        "Secret Key": be(self.s3_sk_input.value.encode("utf-8")),
+                        "Access Key":self.s3_ak_input.value,
+                        "Secret Key": self.s3_sk_input.value,
                         "Role": self.s3_role_input.value
                     }
                 })
@@ -370,8 +369,8 @@ class LoggerSetupPage:
                         "Location": self.data_output_choice.value,
                         "Host": self.ftp_host_input.value, 
                         "Port": self.ftp_port_input.value,
-                        "Username": be(self.ftp_un_input.value.encode("utf-8")),
-                        "Password": be(self.ftp_pwd_input.value.encode("utf-8")),
+                        "Username": self.ftp_un_input.value,
+                        "Password": self.ftp_pwd_input.value,
                         "Directory": self.ftp_dir_input.value
                     }
                 })
@@ -382,6 +381,11 @@ class LoggerSetupPage:
                         "Email Address": self.email_address_input.value
                     }
                 })
+            
+            LoggerSettings.update_settings(self.settings_dict)
+            info('success', 'Data Output settings staged')
+            self.show_config()
+            
 
         elif self.config_selection.value == "Sensor Config":
             self.settings_dict.update({
@@ -392,10 +396,10 @@ class LoggerSetupPage:
                     "Desired Unit": self.du_input.value
                 }
             })
-            
-        LoggerSettings.update_settings(self.settings_dict)
-        info('success', 'settings staged.')
-        self.return_to_main()
+
+            LoggerSettings.update_settings(self.settings_dict)
+            info('success', 'All settings staged')
+            self.return_to_main()
 
     def check_selection(self):
 
