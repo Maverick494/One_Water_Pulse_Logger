@@ -6,14 +6,40 @@ Created on Tue Aug  8 20:33:28 2023
 @author: Justin
 """
 
-from benedict import benedict as bdict
-from botocore.client import Config
 import boto3
 import ftplib
 import json
 import logging
+import os
 
+from benedict import benedict as bdict
+from botocore.client import Config
 from datetime import datetime as dt
+from guizero import App, Box, error, info, Picture, PushButton, Text, TextBox, warn, Window, yesno
+
+
+
+
+class PopupHandler:
+
+    def popup_create(event):
+
+        popup_type = event['Type']
+        popup_title = event['Title']
+        popup_message = event['Message']
+        valid_types = ['info', 'error', 'warn', 'yesno']
+
+        if popup_type in valid_types:
+            if popup_type == 'info':
+                return info(popup_title, popup_message)
+            elif popup_type == 'warn':
+                return warn(popup_title, popup_message)
+            elif popup_type == 'error':
+                return error(popup_title, popup_message)
+            elif popup_type == 'yesno':
+                return yesno(popup_title, popup_message)
+        else:
+            return info(popup_title, popup_message)
 
 
 class LoggerSettings:
@@ -21,6 +47,7 @@ class LoggerSettings:
     settings_directory = '/home/ect-one-user/Desktop/One_Water_Pulse_Logger/config/'
     settings_filename = '_logger_config.json'
     json_data = {}
+    settings_json = {}
 
     @staticmethod
     def update_settings(d):
@@ -48,31 +75,35 @@ class LoggerSettings:
             LoggerSettings.json_data['Site Name'] + \
             LoggerSettings.settings_filename
         
-        # Use json to serialize the data and save to file
-        with open(json_file, 'w') as sf:
-            sf.write(json.dumps(LoggerSettings.json_data))
+        try:
+            # Use json to serialize the data and save to file
+            with open(json_file, 'w') as sf:
+                sf.write(json.dumps(LoggerSettings.json_data))
 
-        sf.close()
-        return {'Settings' : 'Saved to file'}
+            sf.close()
 
-    @staticmethod
-    def retrieve_settings():
+            return {'Result' : 'Settings Saved to {}'.format(json_file)}
         
-        settings = None
+        except Exception as ex:
+            return {'Error' : str(ex)}
+
+    @classmethod
+    def retrieve_settings(cls):
 
         try:            
-            json_file = LoggerSettings.settings_directory + \
-                LoggerSettings.json_data['Site Name'] + \
-                LoggerSettings.settings_filename
-            with open(json_file, 'r') as json:
-                settings = json.load(json)
+            json_file = cls.settings_directory + \
+                cls.json_data['Site Name'] + \
+                cls.settings_filename
+
+            with open(json_file, 'r') as json_data:
+                cls.settings_json = json.load(json_data)
             
             json.close()
         
-            return settings
+            return cls.settings_json
 
         except:
-            return settings
+            return cls.settings_json
 
 class StorageHandler:
     def __init__(self):

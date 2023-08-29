@@ -6,14 +6,14 @@ Created on Tue Aug  8 20:33:16 2023
 @author: Justin
 """
 
-from guizero import App, Box, info, Picture, PushButton, Text, TextBox, Window, yesno
+from guizero import App, Box, error, info, Picture, PushButton, Text, TextBox, warn, Window, yesno
 from datetime import datetime as dt
 import subprocess
 import sys
 from data_output_setup_page import LoggerSetupPage
 from logging_data_display import DataDisplayPage
 import logging as log
-from utilities import LoggerSettings
+from utilities import LoggerSettings, PopupHandler
 
 
 class MainApp:
@@ -108,15 +108,17 @@ class MainApp:
 
         self.settings = LoggerSettings.retrieve_settings()
         
-        if not isinstance(self.settings, type(None)):
-            load_settings = yesno('Load Settings', 'Settings file found. Load settings?')
+        if self.settings['Site Name'] is not None:
+            load_settings = PopupHandler.popup_create({'Type': 'yesno','Title': 'Load Settings', 
+                                                       'Message':'Settings file found. Load settings?'})
             if load_settings:
-                self.site_name.value = self.settings['Site Name']
-                self.logger_setup.import_settings(self.settings)
-        elif isinstance(self.settings, type(None)):
-            info('Config', 'No settings file found. Please configure settings.')
+                self.open_window(DataDisplayPage, 'Logging')
+        else:
+            PopupHandler.popup_create({'Type': 'info',
+                                      'Title': 'Config',
+                                      'Message': 'No settings file found. Please configure settings.'})
 
-        def site_lock(self):
+    def site_lock(self):
 
         if self.submit_site_text == 'Submit':
             self.site_name.disable()
@@ -138,13 +140,15 @@ class MainApp:
             log.info('Site name updated to {0}'.format(self.site_name.value))
 
         self.submit_site.text = self.submit_site_text
-        
+
     def verify_json(self):
 
         self.local_settings = LoggerSettings.check_json()
 
         if all(self.local_settings):
-            info('Config', 'Settings ready for save.')
+            PopupHandler.popup_create({'Type': 'info',
+                                      'Title': 'Config',
+                                      'Message': 'Settings ready for save.'})
             self.sv_stg_to_file.show()
 
     def site_lock(self):

@@ -15,7 +15,7 @@ import threading
 from datetime import datetime as dt
 from datetime import timedelta as td
 from tinydb import TinyDB, Query
-from utilities import LoggerSettings
+from utilities import LoggerSettings, PopupHandler
 
 class DataLogger:
     def __init__(self, settings):

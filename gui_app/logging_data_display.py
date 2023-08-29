@@ -10,6 +10,7 @@ from guizero import Box, Combo, info, Picture, ListBox, PushButton, Text,\
 TextBox, TitleBox, Window
 from datetime import datetime as dt
 from pulse_logger import DataLogger
+from utilities import PopupHandler
 
 
 class DataDisplayPage:

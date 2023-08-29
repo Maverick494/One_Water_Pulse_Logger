@@ -8,7 +8,7 @@ Created on Tue Aug  8 20:33:42 2023
 
 from datetime import datetime as dt
 from guizero import Box, Combo, info, Picture, ListBox, PushButton, Text, TextBox, Window
-from utilities import LoggerSettings
+from utilities import LoggerSettings, PopupHandler
 
 class LoggerSetupPage:
 
@@ -20,6 +20,7 @@ class LoggerSetupPage:
         self.settings_dict = {}
         self.widgets_to_destroy = []
         
+
         # Top Box for header
         self.top_box = Box(self.parent, layout='grid')
 
@@ -315,8 +316,10 @@ class LoggerSetupPage:
             self.show_list_btn,
             self.save_settings_btn
             ])
-                
-    def import_settings(self, d):
+          
+    def update_settings(self):
+
+        d = LoggerSettings.settings_json
 
         if d['Data Output']['Location'] == 's3':
             self.data_output_choice.value = 's3'
@@ -383,7 +386,8 @@ class LoggerSetupPage:
                 })
             
             LoggerSettings.update_settings(self.settings_dict)
-            info('success', 'Data Output settings staged')
+            PopupHandler.popup_create({'Type': 'info', 'Title': 'Success',
+                                        'Message': 'Data Output settings staged'})
             self.show_config()
             
 
@@ -398,7 +402,8 @@ class LoggerSetupPage:
             })
 
             LoggerSettings.update_settings(self.settings_dict)
-            info('success', 'All settings staged')
+            PopupHandler.popup_create({'Type': 'info', 'Title': 'Success',
+                                        'Message': 'All settings staged'})
             self.return_to_main()
 
     def check_selection(self):
