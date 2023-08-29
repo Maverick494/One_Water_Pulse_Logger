@@ -9,7 +9,6 @@ Created on Tue Aug  8 20:33:28 2023
 from benedict import benedict as bdict
 from botocore.client import Config
 import boto3
-import collections.abc
 import ftplib
 import json
 import logging
@@ -36,7 +35,6 @@ class LoggerSettings:
         
         while len(keys_exist) < len(keys_to_get):
             keys_exist.append(False)
-        
         for i in range(len(keys_to_get)):
             if bdict.from_json(cls.json_data)\
                 .search(keys_to_get[i], in_keys=True, in_values=True):        
