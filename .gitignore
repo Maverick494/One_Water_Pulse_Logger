@@ -162,3 +162,7 @@ cython_debug/
 #json_settings
 #Contains site configs including logins and locations
 *.json
+
+#vscode path ignore
+.vscode/
+.vscode/settings.json
