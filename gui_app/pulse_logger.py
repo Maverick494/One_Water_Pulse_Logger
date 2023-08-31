@@ -6,67 +6,126 @@ Created on Tue Aug  8 20:34:11 2023
 @author: Justin
 """
 
-import RPi.GPIO as GPIO
+import pigpio
 import sys
 import time
 import json
-import threading
 
+from benedict import benedict as bdict
 from datetime import datetime as dt
 from datetime import timedelta as td
+from logging_data_display import DataDisplayPage
 from tinydb import TinyDB, Query
-from utilities import LoggerSettings, PopupHandler
+from utilities import LoggerSettings, PopupHandler, StorageHandler
+
 
 class DataLogger:
-    def __init__(self, settings):
-        self.settings = LoggerSettings.retrieve_settings()
-        self.GPIO_LIST = [22, 23, 24, 25]
-        self.GPIO = GPIO  # Initialize GPIO module
-        self.GPIO.setmode(GPIO.BCM)  # Use GPIO Numbering Mode
+    curr_day = dt.strftime(dt.today(), "%y-%m-%d")
+    yesterday = dt.strftime(dt.today() - td(days=1), "%y-%m-%d")
 
-        # Defines the GPIO type (Input or Output)
-        for io in self.GPIO_LIST:
-            self.GPIO.setup(io, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+    if dt.now().hour == 00 and dt.now().minute == 00:
+        file_for_load = (
+            "/home/ect-one-user/Desktop/Logger_Data/" + yesterday + "_data.csv"
+        )
+    elif dt.now().hour >= 00 and dt.now().hour <= 23 and dt.now().minute > 00:
+        file_for_load = (
+            "/home/ect-one-user/Desktop/Logger_Data/" + curr_day + "_data.csv"
+        )
 
-        def logging(self):
-            curr_hour = dt.now().hour
-            curr_min = dt.now().minute
-            settings = LoggerSettings.retrieve_settings()
+    settings = LoggerSettings.retrieve_settings()
+    GPIO_LIST = [22, 23, 24, 25]
+    pulse_per_unit = settings["K Factor"]
+    standard_unit = settings["Standard Unit"]
+    desired_units = settings["Desired Unit"]
+    logger_run = False
+    curr_hour = 0
+    write_min_hr = 3
+    write_min_day = 58
+    hour_total = 0.0
+    day_total = 0.0
+    hour_save = 0.0
+    day_save = 0.0
+    log_data = {
+            "site_name": settings["Site Name"],
+            "sensor": settings["Sensor"]["Name"],
+            "log_timestamp": dt.now(),
+        }
+    pi = pigpio.pi()  # Initialize pigpio module
+    pi.set_mode(GPIO_LIST[0], pigpio.INPUT)
+    cb = pi.callback(GPIO_LIST[0], pigpio.RISING_EDGE)
 
-            # Get settings values
-            pulse_per_unit = settings['k_factor']
-            standard_unit = settings['standard_unit']
-            desired_units = settings['desired_unit']
-            countPulse = ''
+    @classmethod
+    def logging(cls):
 
-            GPIO.add_event_detect(
-                self.GPIO_LIST[0], GPIO.FALLING, callback=countPulse)
+        while cls.logger_run:
+            flow = cls.cb.count / cls.pulse_per_unit
+            cls.hour_total += flow
+            cls.day_total += cls.hour_total
 
-            if self.settings['output'] == 'local':
-                self.save_data = self.write_log_to_db()
+    @classmethod
+    def save_logging(cls):
+        
+        if cls.settings["Data Output"]["Location"] == "local":
+            data_save = DataLogger.write_log_to_db()
+        else:
+            data_save = DataLogger.write_log_to_file() 
+            
+        if cls.curr_hour == dt.now().hour and dt.now().minute == cls.write_min_hr:
+            if cls.standard_unit == cls.desired_units and cls.standard_unit == "gpm":
+                cls.hour_save = cls.hour_total
+                cls.day_save = cls.day_total
+            elif cls.standard_unit != cls.desired_units and cls.standard_unit == "lpm":
+                cls.hour_save = cls.hour_total * 0.2642
+                cls.day_save = cls.day_total * 0.2642
+
+            logs_to_save = DataLogger.update_logdata({"hourly_flow": cls.hour_save,
+                                                        "daily_flow": cls.day_save})
+            data_save(logs_to_save)
+            cls.hour_count = 0
+
+        elif cls.curr_hour == 23 and dt.now().minute == cls.write_min_day:
+            logs_to_save = DataLogger.update_logdata({"hourly_flow": cls.hour_save,
+                                                        "daily_flow": cls.day_save})
+            data_save(logs_to_save)
+            cls.data_export()
+            cls.hour_count = 0
+            cls.day_count = 0
+
+    @staticmethod
+    def update_logdata(d):
+        bdict(DataLogger.log_data).merge(d, overwrite=True)
+
+
+    def start_logging(cls):
+        cls.logger_run = True
+        cls.curr_hour = dt.now().hour
+
+    def stop_logging(cls):
+        cls.logger_run = False
+        cls.pi.stop()
+
+    def data_export():
+        where_to = LoggerSettings.settings_json["Data Output"]["Location"]
+
+        if where_to in ["s3", "ftp"]:
+            if where_to == "s3":
+                StorageHandler.upload_to_s3(DataLogger.file_for_load)
             else:
-                self.save_data = self.write_log_to_file()
-            
-            
-            log_data = {'site_name': self.settings['site_name'], 
-            'sensor': self.settings['sensor_name'],
-            'log_timestamp': dt.now()}
-            
-            
+                StorageHandler.upload_to_ftp(DataLogger.file_for_load)
+    
+    @staticmethod
+    def write_log_to_file(file_for_load, log_data):
+        with open(DataLogger.log_file, "a") as lf:
+            lf.write("{}\t{}\t{}\t{}\t{}\n").format(
+                DataLogger.log_data["site_name"],
+                DataLogger.log_data["sensor"],
+                DataLogger.log_data["log_timestamp"],
+                DataLogger.log_data["hourly_flow"],
+                DataLogger.log_data["daily_flow"],
+            )
 
-        def stop_logging(self):
-            self.GPIO.cleanup()
-            sys.exit()
+        lf.close()
 
-        def write_log_to_file(self):
-            curr_day = dt.strftime(dt.today(), '%y-%m-%d')
-            yesterday = dt.strftime(dt.today() - td (days = 1), '%y-%m-%d')
-            
-            self.log_file = '/home/ect-one-user/Desktop/One_Water_Pulse_Logger/gui_app/logger_data'
-            with open(self.log_file, 'a') as lf :
-                lf.write('{}\t{}\t{}\t')
-                
-            lf.close()
-            
-        def write_log_to_db(self):
-            Query.insert(self.log_data)
+    @staticmethod
+    def write_log_to_db(dict_to_write):
+        Query.insert(dict_to_write)
