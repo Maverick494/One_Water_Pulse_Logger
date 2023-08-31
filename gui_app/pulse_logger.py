@@ -10,11 +10,11 @@ import pigpio
 import sys
 import time
 import json
+import threading
 
 from benedict import benedict as bdict
 from datetime import datetime as dt
 from datetime import timedelta as td
-from logging_data_display import DataDisplayPage
 from tinydb import TinyDB, Query
 from utilities import LoggerSettings, PopupHandler, StorageHandler
 
@@ -46,17 +46,17 @@ class DataLogger:
     hour_save = 0.0
     day_save = 0.0
     log_data = {
-            "site_name": settings["Site Name"],
-            "sensor": settings["Sensor"]["Name"],
-            "log_timestamp": dt.now(),
-        }
+        "site_name": settings["Site Name"],
+        "sensor": settings["Sensor"]["Name"],
+        "log_timestamp": dt.now(),
+    }
     pi = pigpio.pi()  # Initialize pigpio module
     pi.set_mode(GPIO_LIST[0], pigpio.INPUT)
     cb = pi.callback(GPIO_LIST[0], pigpio.RISING_EDGE)
+    lock = threading.Lock()  # Add a lock for thread synchronization
 
     @classmethod
     def logging(cls):
-
         while cls.logger_run:
             flow = cls.cb.count / cls.pulse_per_unit
             cls.hour_total += flow
@@ -64,12 +64,11 @@ class DataLogger:
 
     @classmethod
     def save_logging(cls):
-        
         if cls.settings["Data Output"]["Location"] == "local":
             data_save = DataLogger.write_log_to_db()
         else:
-            data_save = DataLogger.write_log_to_file() 
-            
+            data_save = DataLogger.write_log_to_file()
+
         if cls.curr_hour == dt.now().hour and dt.now().minute == cls.write_min_hr:
             if cls.standard_unit == cls.desired_units and cls.standard_unit == "gpm":
                 cls.hour_save = cls.hour_total
@@ -78,14 +77,16 @@ class DataLogger:
                 cls.hour_save = cls.hour_total * 0.2642
                 cls.day_save = cls.day_total * 0.2642
 
-            logs_to_save = DataLogger.update_logdata({"hourly_flow": cls.hour_save,
-                                                        "daily_flow": cls.day_save})
+            logs_to_save = DataLogger.update_logdata(
+                {"hourly_flow": cls.hour_save, "daily_flow": cls.day_save}
+            )
             data_save(logs_to_save)
             cls.hour_count = 0
 
         elif cls.curr_hour == 23 and dt.now().minute == cls.write_min_day:
-            logs_to_save = DataLogger.update_logdata({"hourly_flow": cls.hour_save,
-                                                        "daily_flow": cls.day_save})
+            logs_to_save = DataLogger.update_logdata(
+                {"hourly_flow": cls.hour_save, "daily_flow": cls.day_save}
+            )
             data_save(logs_to_save)
             cls.data_export()
             cls.hour_count = 0
@@ -95,10 +96,10 @@ class DataLogger:
     def update_logdata(d):
         bdict(DataLogger.log_data).merge(d, overwrite=True)
 
-
     def start_logging(cls):
         cls.logger_run = True
         cls.curr_hour = dt.now().hour
+        cls.pi.start()
 
     def stop_logging(cls):
         cls.logger_run = False
@@ -112,7 +113,7 @@ class DataLogger:
                 StorageHandler.upload_to_s3(DataLogger.file_for_load)
             else:
                 StorageHandler.upload_to_ftp(DataLogger.file_for_load)
-    
+
     @staticmethod
     def write_log_to_file(file_for_load, log_data):
         with open(DataLogger.log_file, "a") as lf:

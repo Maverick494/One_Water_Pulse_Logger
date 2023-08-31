@@ -32,8 +32,10 @@ class DataDisplayPage:
         self.main_app = main_app
         # self.start = DataLogger.start_logging()
         # self.stop = DataLogger.stop_logging()
-        self.logging_thread = threading.Thread(target = DataLogger.logging)
-        self.save_logging_thread = threading.Thread(target = DataLogger.save_logging)
+
+        # Add instance variables for threads
+        self.display_thread = threading.Thread(target=self.update_display)
+        self.save_logging_thread = threading.Thread(target=self.save_logging)
 
         # Top Box for header
         self.top_box = Box(self.parent, layout="grid")
@@ -95,7 +97,6 @@ class DataDisplayPage:
         self.flow_rate = Text(
             self.flow_rate_hdr, text=0.0, size=16
         ).text_color = "white"
-        
 
         self.hourly_flow = Text(
             self.hourly_flow_hdr, text=0.0, size=16
@@ -110,7 +111,7 @@ class DataDisplayPage:
         self.return_button = PushButton(
             self.bottom_box,
             text="Start Logging",
-            command="",
+            command=self.start,
             align="bottom",
             grid=[0, 2],
         )
@@ -119,7 +120,7 @@ class DataDisplayPage:
         self.return_button = PushButton(
             self.bottom_box,
             text="Stop Logging",
-            command="",
+            command=self.stop,
             align="bottom",
             grid=[0, 2],
         )
@@ -137,3 +138,38 @@ class DataDisplayPage:
     def return_to_main(self):
         self.main_app.app.show()
         self.parent.destroy()
+        self.display_thread.stop()
+        self.save_logging_thread.stop()
+        PopupHandler.popup({"Type": "info",
+                            "Title":"Logging Stopped",
+                            "Message": "Logging has been stopped due to leaving the Data Display Page"})
+
+    def start(self):
+        DataLogger.start_logging()
+        self.display_thread.start()
+        self.save_logging_thread.start()
+        PopupHandler.popup({"Type": "info",
+                            "Title":"Logging Started",
+                            "Message": "Logging has been started"})
+        
+    def stop(self):
+        DataLogger.stop_logging()
+        self.display_thread.stop()
+        self.save_logging_thread.stop()
+        PopupHandler.popup({"Type": "info",
+                            "Title":"Logging Stopped",
+                            "Message": "Logging has been stopped"})
+
+    def update_display(self):
+        while True:
+            # Access and update the display elements
+            self.flow_rate.value = DataLogger.hour_total
+            self.hourly_flow.value = DataLogger.hour_total
+            self.daily_flow.value = DataLogger.day_total
+            # Sleep for 100ms
+            time.sleep(0.1)
+
+    def save_logging(self):
+        while True:
+            DataLogger.save_logging()  # Call the save_logging method in DataLogger
+            time.sleep(60)  # Sleep for 60 seconds
