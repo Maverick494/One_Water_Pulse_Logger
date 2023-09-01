@@ -1,0 +1,1 @@
+{"Site Name": "1550 Mission", "Data Output": {"Location": "ftp", "Host": "s-02c1179ad3cd45009.server.transfer.us-west-1.amazonaws.com", "Port": "", "Username": "ECT_FTP_User", "Password": "3picCle@ntecFTP!", "Directory": "/epiccleantec-data/logger_data"}, "Sensor": {"Name": "POTW Inlet", "K Factor": "24", "Standard Unit": "GPM", "Desired Unit": "GPM"}}
