@@ -9,7 +9,6 @@ import boto3
 import ftplib
 import json
 import logging
-import os
 
 from benedict import benedict as bdict
 from botocore.client import Config
@@ -27,6 +26,7 @@ from guizero import (
     Window,
     yesno,
 )
+from os.path import exists
 
 
 class PopupHandler:
@@ -52,12 +52,12 @@ class PopupHandler:
 class LoggerSettings:
     settings_directory = "/home/ect-one-user/Desktop/One_Water_Pulse_Logger/config/"
     settings_filename = "_logger_config.json"
-    json_data = {}
     settings_json = {}
 
     @staticmethod
     def update_settings(d):
-        bdict(LoggerSettings.json_data).merge(d, overwrite=True)
+        bdict(LoggerSettings.settings_json).merge(d, overwrite=True)
+        print(LoggerSettings.settings_json)
 
     @classmethod
     def check_json(cls):
@@ -67,7 +67,7 @@ class LoggerSettings:
         while len(keys_exist) < len(keys_to_get):
             keys_exist.append(False)
         for i in range(len(keys_to_get)):
-            if bdict.from_json(cls.json_data).search(
+            if bdict.from_json(cls.settings_json).search(
                 keys_to_get[i], in_keys=True, in_values=True
             ):
                 keys_exist[i] = True
@@ -76,16 +76,17 @@ class LoggerSettings:
 
     @staticmethod
     def save_to_json():
+        
         json_file = (
             LoggerSettings.settings_directory
-            + LoggerSettings.json_data["Site Name"]
+            + LoggerSettings.settings_json["Site Name"]
             + LoggerSettings.settings_filename
         )
 
         try:
             # Use json to serialize the data and save to file
             with open(json_file, "w") as sf:
-                sf.write(json.dumps(LoggerSettings.json_data))
+                sf.write(json.dumps(LoggerSettings.settings_json))
 
             sf.close()
 
@@ -95,24 +96,20 @@ class LoggerSettings:
             return {"Error": str(ex)}
 
     @staticmethod
-    def retrieve_settings():
-        print(LoggerSettings.settings_json)
-        try:
-            json_file = (
-                LoggerSettings.settings_directory
-                + LoggerSettings.json_data["Site Name"]
-                + LoggerSettings.settings_filename
-            )
+    def retrieve_settings(site_name=None):
 
+        json_file = LoggerSettings.settings_directory + site_name + LoggerSettings.settings_filename
+
+        if exists(json_file):
             with open(json_file, "r") as json_data:
                 LoggerSettings.settings_json = json.load(json_data)
 
-            json.close()
+            json_data.close()
 
-            return LoggerSettings.settings_json
+            return {"File Exists" : True}, LoggerSettings.settings_json
 
-        except:
-            return LoggerSettings.settings_json
+        else:
+            return {"File Exists" : False}, LoggerSettings.settings_json
 
 
 class StorageHandler:

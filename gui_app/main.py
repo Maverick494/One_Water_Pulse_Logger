@@ -99,7 +99,7 @@ class MainApp:
 
         self.sv_box = Box(self.app, layout="auto", align="top")
         self.sv_stg_to_file = PushButton(
-            self.sv_box, text="Save Settings File", command=LoggerSettings.save_to_json
+            self.sv_box, text="Save Settings File", command=self.save_settings
         )
         self.sv_stg_to_file.text_color = "white"
         self.sv_stg_to_file.width = 50
@@ -140,9 +140,9 @@ class MainApp:
         self.app.display()
 
     def get_settings(self):
-        self.settings = LoggerSettings.retrieve_settings()
+        self.settings = LoggerSettings.retrieve_settings(self.site_name.value)
 
-        if self.settings["Site Name"] is not None:
+        if self.settings[0]["File Exists"]:
             load_settings = PopupHandler.popup_create(
                 {
                     "Type": "yesno",
@@ -196,27 +196,18 @@ class MainApp:
             )
             self.sv_stg_to_file.show()
 
-    def site_lock(self):
-        if self.submit_site_text == "Submit":
-            self.site_name.disable()
-            self.submit_site_text = "Alter Site Name"
-            LoggerSettings.update_settings({"Site Name": self.site_name.value})
-            self.get_settings()
-            self.open_ds_button.show()
-
-            # Add a log statement
-            log.info(f"Site name updated to {self.site_name.value}")
-
-        else:
-            self.site_name.enable()
-            self.submit_site_text = "Submit"
-            self.open_ds_button.hide()
-            self.open_db_button.hide()
-
-            # Add a log statement
-            log.info(f"Site name updated to {self.site_name.value}")
-
-        self.submit_site.text = self.submit_site_text
+    def save_settings(self):
+        LoggerSettings.save_to_json()
+        PopupHandler.popup_create(
+                {
+                    "Type": "info",
+                    "Title": "Config",
+                    "Message": "Settings saved to file.",
+                }
+            )
+        self.sv_stg_to_file.hide()
+        self.open_ds_button.disable()
+        self.open_db_button.show()
 
     def open_window(self, module, wdw_name):
         self.app.hide()
