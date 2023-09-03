@@ -29,11 +29,11 @@ long_line_column=80
 
 [files]
 current_page=4
-FILE_NAME_0=353;Python;0;EUTF-8;0;1;0;%2Fhome%2Fect-one-user%2FDesktop%2FOne_Water_Pulse_Logger%2Fgui_app%2Futilities.py;0;4
-FILE_NAME_1=13386;Python;0;EUTF-8;1;1;0;%2Fhome%2Fect-one-user%2FDesktop%2FOne_Water_Pulse_Logger%2Fgui_app%2Fdata_output_setup_page.py;0;1
-FILE_NAME_2=302;Python;0;EUTF-8;0;1;0;%2Fhome%2Fect-one-user%2FDesktop%2FOne_Water_Pulse_Logger%2Fgui_app%2Fpulse_logger.py;0;4
-FILE_NAME_3=17;Python;0;EUTF-8;0;1;0;%2Fhome%2Fect-one-user%2FDesktop%2FOne_Water_Pulse_Logger%2Fgui_app%2Flogging_data_display.py;0;8
-FILE_NAME_4=0;Python;0;EUTF-8;0;1;0;%2Fhome%2Fect-one-user%2FDesktop%2FOne_Water_Pulse_Logger%2Fgui_app%2Fmain.py;0;8
+FILE_NAME_0=202;Python;0;EUTF-8;0;1;0;%2Fhome%2Fect-one-user%2FDesktop%2FOne_Water_Pulse_Logger%2Fgui_app%2Fmain.py;0;8
+FILE_NAME_1=270;Python;0;EUTF-8;0;1;0;%2Fhome%2Fect-one-user%2FDesktop%2FOne_Water_Pulse_Logger%2Fgui_app%2Futilities.py;0;4
+FILE_NAME_2=9742;Python;0;EUTF-8;1;1;0;%2Fhome%2Fect-one-user%2FDesktop%2FOne_Water_Pulse_Logger%2Fgui_app%2Fdata_output_setup_page.py;0;1
+FILE_NAME_3=302;Python;0;EUTF-8;0;1;0;%2Fhome%2Fect-one-user%2FDesktop%2FOne_Water_Pulse_Logger%2Fgui_app%2Fpulse_logger.py;0;4
+FILE_NAME_4=17;Python;0;EUTF-8;0;1;0;%2Fhome%2Fect-one-user%2FDesktop%2FOne_Water_Pulse_Logger%2Fgui_app%2Flogging_data_display.py;0;8
 
 [VTE]
 last_dir=/home/ect-one-user
