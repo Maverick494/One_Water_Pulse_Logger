@@ -1,5 +1,4 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
 """
 Created on Wed Aug  9 15:02:27 2023
 

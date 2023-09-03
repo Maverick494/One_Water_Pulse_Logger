@@ -1,5 +1,4 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
 """
 Created on Tue Aug  8 20:33:28 2023
 
@@ -95,24 +94,25 @@ class LoggerSettings:
         except Exception as ex:
             return {"Error": str(ex)}
 
-    @classmethod
-    def retrieve_settings(cls):
+    @staticmethod
+    def retrieve_settings():
+        print(LoggerSettings.settings_json)
         try:
             json_file = (
-                cls.settings_directory
-                + cls.json_data["Site Name"]
-                + cls.settings_filename
+                LoggerSettings.settings_directory
+                + LoggerSettings.json_data["Site Name"]
+                + LoggerSettings.settings_filename
             )
 
             with open(json_file, "r") as json_data:
-                cls.settings_json = json.load(json_data)
+                LoggerSettings.settings_json = json.load(json_data)
 
             json.close()
 
-            return cls.settings_json
+            return LoggerSettings.settings_json
 
         except:
-            return cls.settings_json
+            return LoggerSettings.settings_json
 
 
 class StorageHandler:

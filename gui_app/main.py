@@ -1,5 +1,4 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
 """
 Created on Tue Aug  8 20:33:16 2023
 
@@ -171,7 +170,7 @@ class MainApp:
             self.open_ds_button.show()
 
             # Add a log statement
-            log.info("Site name updated to {0}".format(self.site_name.value))
+            log.info(f"Site name updated to {self.site_name.value}")
 
         else:
             self.site_name.enable()
@@ -180,7 +179,7 @@ class MainApp:
             self.open_db_button.hide()
 
             # Add a log statement
-            log.info("Site name updated to {0}".format(self.site_name.value))
+            log.info(f"Site name updated to {self.site_name.value}")
 
         self.submit_site.text = self.submit_site_text
 
@@ -206,7 +205,7 @@ class MainApp:
             self.open_ds_button.show()
 
             # Add a log statement
-            log.info("Site name updated to {0}".format(self.site_name.value))
+            log.info(f"Site name updated to {self.site_name.value}")
 
         else:
             self.site_name.enable()
@@ -215,7 +214,7 @@ class MainApp:
             self.open_db_button.hide()
 
             # Add a log statement
-            log.info("Site name updated to {0}".format(self.site_name.value))
+            log.info(f"Site name updated to {self.site_name.value}")
 
         self.submit_site.text = self.submit_site_text
 

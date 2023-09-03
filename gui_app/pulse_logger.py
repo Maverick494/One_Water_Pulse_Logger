@@ -1,5 +1,4 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
 """
 Created on Tue Aug  8 20:34:11 2023
 
@@ -20,93 +19,92 @@ from utilities import LoggerSettings, PopupHandler, StorageHandler
 
 
 class DataLogger:
-    curr_day = dt.strftime(dt.today(), "%y-%m-%d")
-    yesterday = dt.strftime(dt.today() - td(days=1), "%y-%m-%d")
 
-    if dt.now().hour == 00 and dt.now().minute == 00:
-        file_for_load = (
-            "/home/ect-one-user/Desktop/Logger_Data/" + yesterday + "_data.csv"
-        )
-    elif dt.now().hour >= 00 and dt.now().hour <= 23 and dt.now().minute > 00:
-        file_for_load = (
-            "/home/ect-one-user/Desktop/Logger_Data/" + curr_day + "_data.csv"
-        )
+    def __init__(self):
+        self.curr_day = dt.strftime(dt.today(), "%y-%m-%d")
+        self.yesterday = dt.strftime(dt.today() - td(days=1), "%y-%m-%d")
 
-    settings = LoggerSettings.retrieve_settings()
-    GPIO_LIST = [22, 23, 24, 25]
-    pulse_per_unit = settings["K Factor"]
-    standard_unit = settings["Standard Unit"]
-    desired_units = settings["Desired Unit"]
-    logger_run = False
-    curr_hour = 0
-    write_min_hr = 3
-    write_min_day = 58
-    hour_total = 0.0
-    day_total = 0.0
-    hour_save = 0.0
-    day_save = 0.0
-    log_data = {
-        "site_name": settings["Site Name"],
-        "sensor": settings["Sensor"]["Name"],
-        "log_timestamp": dt.now(),
-    }
-    pi = pigpio.pi()  # Initialize pigpio module
-    pi.set_mode(GPIO_LIST[0], pigpio.INPUT)
-    cb = pi.callback(GPIO_LIST[0], pigpio.RISING_EDGE)
-    lock = threading.Lock()  # Add a lock for thread synchronization
+        if dt.now().hour == 00 and dt.now().minute == 00:
+            self.file_for_load = (
+                "/home/ect-one-user/Desktop/Logger_Data/" + self.yesterday + "_data.csv"
+            )
+        elif dt.now().hour >= 00 and dt.now().hour <= 23 and dt.now().minute > 00:
+            self.file_for_load = (
+                "/home/ect-one-user/Desktop/Logger_Data/" + self.curr_day + "_data.csv"
+            )
 
-    @classmethod
-    def logging(cls):
-        while cls.logger_run:
-            flow = cls.cb.count / cls.pulse_per_unit
-            cls.hour_total += flow
-            cls.day_total += cls.hour_total
+        self.settings = LoggerSettings.retrieve_settings()
+        self.GPIO_LIST = [22, 23, 24, 25]
+        self.logger_run = False
+        self.curr_hour = 0
+        self.write_min_hr = 3
+        self.write_min_day = 58
+        self.hour_total = 0.0
+        self.day_total = 0.0
+        self.hour_save = 0.0
+        self.day_save = 0.0
+        self.log_data = {
+            "site_name": self.settings["Site Name"],
+            "sensor": self.settings["Sensor"]["Name"],
+            "log_timestamp": dt.now(),
+        }
+        self.pi = pigpio.pi()  # Initialize pigpio module
+        self.pi.set_mode(self.GPIO_LIST[0], pigpio.INPUT)
+        self.cb = self.pi.callback(self.GPIO_LIST[0], pigpio.RISING_EDGE)
+        self.lock = threading.Lock()  # Add a lock for thread synchronization
 
-    @classmethod
-    def save_logging(cls):
-        if cls.settings["Data Output"]["Location"] == "local":
-            data_save = DataLogger.write_log_to_db()
+    def logging(self):
+        while self.logger_run:
+            flow = self.cb.count / self.settings["K Factor"]
+            self.hour_total += flow
+            self.day_total += self.hour_total
+
+    def save_logging(self):
+        if self.settings["Data Output"]["Location"] == "local":
+            data_save = self.write_log_to_db
         else:
-            data_save = DataLogger.write_log_to_file()
+            data_save = self.write_log_to_file
 
-        if cls.curr_hour == dt.now().hour and dt.now().minute == cls.write_min_hr:
-            if cls.standard_unit == cls.desired_units and cls.standard_unit == "gpm":
-                cls.hour_save = cls.hour_total
-                cls.day_save = cls.day_total
-            elif cls.standard_unit != cls.desired_units and cls.standard_unit == "lpm":
-                cls.hour_save = cls.hour_total * 0.2642
-                cls.day_save = cls.day_total * 0.2642
+        if self.curr_hour == dt.now().hour and dt.now().minute == self.write_min_hr:
+            if self.standard_unit == self.desired_units and self.standard_unit == "gpm":
+                self.hour_save = self.hour_total
+                self.day_save = self.day_total
+            elif self.standard_unit != self.desired_units and self.standard_unit == "lpm":
+                self.hour_save = self.hour_total * 0.2642
+                self.day_save = self.day_total * 0.2642
 
-            logs_to_save = DataLogger.update_logdata(
-                {"hourly_flow": cls.hour_save, "daily_flow": cls.day_save}
+            logs_to_save = self.update_logdata(
+                {"hourly_flow": self.hour_save, "daily_flow": self.day_save}
             )
             data_save(logs_to_save)
-            cls.hour_count = 0
+            self.hour_count = 0
 
-        elif cls.curr_hour == 23 and dt.now().minute == cls.write_min_day:
-            logs_to_save = DataLogger.update_logdata(
-                {"hourly_flow": cls.hour_save, "daily_flow": cls.day_save}
+        elif self.curr_hour == 23 and dt.now().minute == self.write_min_day:
+            logs_to_save = self.update_logdata(
+                {"hourly_flow": self.hour_save, "daily_flow": self.day_save}
             )
             data_save(logs_to_save)
-            cls.data_export()
-            cls.hour_count = 0
-            cls.day_count = 0
+            self.data_export()
+            self.hour_count = 0
+            self.day_count = 0
+
+    def update_logdata(self, d):
+        bdict(self.log_data).merge(d, overwrite=True)
 
     @staticmethod
-    def update_logdata(d):
-        bdict(DataLogger.log_data).merge(d, overwrite=True)
+    def start_logging():
+        DataLogger.logger_run = True
+        DataLogger.curr_hour = dt.now().hour
+        DataLogger.pi.start()
 
-    def start_logging(cls):
-        cls.logger_run = True
-        cls.curr_hour = dt.now().hour
-        cls.pi.start()
+    @staticmethod
+    def stop_logging():
+        DataLogger.logger_run = False
+        DataLogger.pi.stop()
 
-    def stop_logging(cls):
-        cls.logger_run = False
-        cls.pi.stop()
-
+    @staticmethod
     def data_export():
-        where_to = LoggerSettings.settings_json["Data Output"]["Location"]
+        where_to = DataLogger.settings["Data Output"]["Location"]
 
         if where_to in ["s3", "ftp"]:
             if where_to == "s3":
@@ -115,15 +113,9 @@ class DataLogger:
                 StorageHandler.upload_to_ftp(DataLogger.file_for_load)
 
     @staticmethod
-    def write_log_to_file(file_for_load, log_data):
-        with open(DataLogger.log_file, "a") as lf:
-            lf.write("{}\t{}\t{}\t{}\t{}\n").format(
-                DataLogger.log_data["site_name"],
-                DataLogger.log_data["sensor"],
-                DataLogger.log_data["log_timestamp"],
-                DataLogger.log_data["hourly_flow"],
-                DataLogger.log_data["daily_flow"],
-            )
+    def write_log_to_file(self, dict_to_write):
+        with open(self.file_for_load, "a") as lf:
+            lf.write("{}\t{}\t{}\t{}\t{}\n").format(dict_to_write)
 
         lf.close()
 
