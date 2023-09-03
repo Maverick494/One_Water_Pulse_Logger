@@ -8,11 +8,8 @@ class TestLoggerSettings(unittest.TestCase):
     # Tests that the update_settings method updates the settings with a valid dictionary
     def test_update_settings_with_valid_dictionary(self):
         # Given
-<<<<<<< HEAD
-=======
         import sys
         sys.path.insert(0, "/home/ect-one-user/Desktop/One_Water_Pulse_Logger/gui_app")
->>>>>>> jpulley_working
         from utilities import LoggerSettings
         logger_settings = LoggerSettings()
         valid_dictionary = {"Site Name": "Test Site", "Sensor": "Test Sensor", "Data Output": "Test Output"}
@@ -26,21 +23,14 @@ class TestLoggerSettings(unittest.TestCase):
     # Tests that the save_to_json method saves the settings to a JSON file
     def test_save_settings_to_json(self):
         # Given
-<<<<<<< HEAD
-=======
         import sys
         sys.path.insert(0, "/home/ect-one-user/Desktop/One_Water_Pulse_Logger/gui_app")
->>>>>>> jpulley_working
         from utilities import LoggerSettings
         from unittest.mock import patch
 
         logger_settings = LoggerSettings()
         logger_settings.json_data = {"Site Name": "Test Site", "Sensor": "Test Sensor", "Data Output": "Test Output"}
-<<<<<<< HEAD
-        expected_result = {"Result": "Settings Saved to /home/ect-one-user/Desktop/One_Water_Pulse_Logger/config/Test Site/_logger_config.json"}
-=======
         expected_result = {"Result": "Settings Saved to /home/ect-one-user/Desktop/One_Water_Pulse_Logger/config/Test Site_logger_config.json"}
->>>>>>> jpulley_working
 
         # When
         with patch("builtins.open") as mock_open, \
@@ -53,11 +43,8 @@ class TestLoggerSettings(unittest.TestCase):
     # Tests that the retrieve_settings method retrieves the settings from a JSON file
     def test_retrieve_settings_from_json(self):
         # Given
-<<<<<<< HEAD
-=======
         import sys
         sys.path.insert(0, "/home/ect-one-user/Desktop/One_Water_Pulse_Logger/gui_app")
->>>>>>> jpulley_working
         from utilities import LoggerSettings
         from unittest.mock import patch
         logger_settings = LoggerSettings()
@@ -74,11 +61,8 @@ class TestLoggerSettings(unittest.TestCase):
     # Tests that an exception is raised when attempting to save the settings to a non-existent directory
     def test_save_settings_to_nonexistent_directory(self):
         # Given
-<<<<<<< HEAD
-=======
         import sys
         sys.path.insert(0, "/home/ect-one-user/Desktop/One_Water_Pulse_Logger/gui_app")
->>>>>>> jpulley_working
         from utilities import LoggerSettings
         logger_settings = LoggerSettings()
         logger_settings.json_data = {"Site Name": "Test Site", "Sensor": "Test Sensor", "Data Output": "Test Output"}
@@ -90,11 +74,8 @@ class TestLoggerSettings(unittest.TestCase):
     # Tests that an exception is raised when attempting to retrieve the settings from a non-existent directory
     def test_retrieve_settings_from_nonexistent_directory(self):
         # Given
-<<<<<<< HEAD
-=======
         import sys
         sys.path.insert(0, "/home/ect-one-user/Desktop/One_Water_Pulse_Logger/gui_app")
->>>>>>> jpulley_working
         from utilities import LoggerSettings
         logger_settings = LoggerSettings()
         logger_settings.json_data = {"Site Name": "Test Site", "Sensor": "Test Sensor", "Data Output": "Test Output"}
@@ -106,12 +87,9 @@ class TestLoggerSettings(unittest.TestCase):
     # Tests that the settings can be successfully retrieved from a valid JSON file, with the creation of the directory if it does not exist
     def test_retrieve_settings_from_valid_json_file_with_directory_creation(self):
         # Given
-<<<<<<< HEAD
-=======
         import os
         import sys
         sys.path.insert(0, "/home/ect-one-user/Desktop/One_Water_Pulse_Logger/gui_app")
->>>>>>> jpulley_working
         from utilities import LoggerSettings
         import json
 
