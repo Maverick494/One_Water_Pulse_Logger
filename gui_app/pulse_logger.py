@@ -93,14 +93,16 @@ class DataLogger:
 
     @staticmethod
     def start_logging():
-        DataLogger.logger_run = True
-        DataLogger.curr_hour = dt.now().hour
-        DataLogger.pi.start()
+        dl = DataLogger()
+        dl.logger_run = True
+        dl.curr_hour = dt.now().hour
+        dl.pi.start()
 
     @staticmethod
     def stop_logging():
-        DataLogger.logger_run = False
-        DataLogger.pi.stop()
+        dl = DataLogger()
+        dl.logger_run = False
+        dl.pi.stop()
 
     @staticmethod
     def data_export():

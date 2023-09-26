@@ -29,12 +29,12 @@ class DataDisplayPage:
     def __init__(self, parent, main_app):
         self.parent = parent
         self.main_app = main_app
-        # self.start = DataLogger.start_logging()
-        # self.stop = DataLogger.stop_logging()
 
         # Add instance variables for threads
         self.display_thread = threading.Thread(target=self.update_display)
         self.save_logging_thread = threading.Thread(target=self.save_logging)
+        self.display_thread_run = False
+        self.save_logging_thread_run = False
 
         # Top Box for header
         self.top_box = Box(self.parent, layout="grid")
@@ -121,7 +121,7 @@ class DataDisplayPage:
             text="Stop Logging",
             command=self.stop,
             align="bottom",
-            grid=[0, 2],
+            grid=[1, 2],
         )
         self.return_button.text_color = "white"
 
@@ -130,15 +130,14 @@ class DataDisplayPage:
             text="Return to Main Page",
             command=self.return_to_main,
             align="bottom",
-            grid=[0, 2],
+            grid=[2, 2],
         )
         self.return_button.text_color = "white"
 
     def return_to_main(self):
         self.main_app.app.show()
         self.parent.destroy()
-        self.display_thread.stop()
-        self.save_logging_thread.stop()
+        self.stop()
         PopupHandler.popup({"Type": "info",
                             "Title":"Logging Stopped",
                             "Message": "Logging has been stopped due to leaving the Data Display Page"})
@@ -147,14 +146,16 @@ class DataDisplayPage:
         DataLogger.start_logging()
         self.display_thread.start()
         self.save_logging_thread.start()
+        self.display_thread_run = True
+        self.save_logging_thread_run = True
         PopupHandler.popup({"Type": "info",
                             "Title":"Logging Started",
                             "Message": "Logging has been started"})
         
     def stop(self):
         DataLogger.stop_logging()
-        self.display_thread.stop()
-        self.save_logging_thread.stop()
+        self.display_thread_run = False
+        self.save_logging_thread_run = False
         PopupHandler.popup({"Type": "info",
                             "Title":"Logging Stopped",
                             "Message": "Logging has been stopped"})
@@ -167,8 +168,12 @@ class DataDisplayPage:
             self.daily_flow.value = DataLogger.day_total
             # Sleep for 100ms
             time.sleep(0.1)
+            if self.display_thread_run == False:
+                break
 
     def save_logging(self):
         while True:
             DataLogger.save_logging()  # Call the save_logging method in DataLogger
             time.sleep(60)  # Sleep for 60 seconds
+            if self.save_logging_thread_run == False:
+                break
