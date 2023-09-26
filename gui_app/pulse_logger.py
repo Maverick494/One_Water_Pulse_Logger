@@ -21,16 +21,16 @@ from utilities import LoggerSettings, PopupHandler, StorageHandler
 class DataLogger:
 
     def __init__(self):
-        self.curr_day = dt.strftime(dt.today(), "%y-%m-%d")
-        self.yesterday = dt.strftime(dt.today() - td(days=1), "%y-%m-%d")
+        self.curr_day = dt.strftime(dt.now(), "%y-%m-%d")
+        self.yesterday = dt.strftime(dt.now() - td(days=1), "%y-%m-%d")
 
         if dt.now().hour == 00 and dt.now().minute == 00:
             self.file_for_load = (
-                "/home/ect-one-user/Desktop/Logger_Data/" + self.yesterday + "_data.csv"
+                f"/home/ect-one-user/Desktop/Logger_Data/{self.yesterday}_data.csv"
             )
         elif dt.now().hour >= 00 and dt.now().hour <= 23 and dt.now().minute > 00:
             self.file_for_load = (
-                "/home/ect-one-user/Desktop/Logger_Data/" + self.curr_day + "_data.csv"
+                f"/home/ect-one-user/Desktop/Logger_Data/{self.curr_day}_data.csv"
             )
 
         self.settings = LoggerSettings.retrieve_settings()
@@ -108,11 +108,10 @@ class DataLogger:
     def data_export():
         where_to = DataLogger.settings["Data Output"]["Location"]
 
-        if where_to in ["s3", "ftp"]:
-            if where_to == "s3":
-                StorageHandler.upload_to_s3(DataLogger.file_for_load)
-            else:
-                StorageHandler.upload_to_ftp(DataLogger.file_for_load)
+        if where_to == "s3":
+            StorageHandler.upload_to_s3(DataLogger.file_for_load)
+        elif where_to == "ftp":
+            StorageHandler.upload_to_ftp(DataLogger.file_for_load)
 
     @staticmethod
     def write_log_to_file(self, dict_to_write):
