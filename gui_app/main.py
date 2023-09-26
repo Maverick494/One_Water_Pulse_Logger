@@ -143,14 +143,13 @@ class MainApp:
         self.settings = LoggerSettings.retrieve_settings(self.site_name.value)
 
         if self.settings[0]["File Exists"]:
-            load_settings = PopupHandler.popup_create(
+            if load_settings := PopupHandler.popup_create(
                 {
                     "Type": "yesno",
                     "Title": "Load Settings",
                     "Message": "Settings file found. Load settings?",
                 }
-            )
-            if load_settings:
+            ):
                 self.open_window(DataDisplayPage, "Logging")
         else:
             PopupHandler.popup_create(
@@ -169,17 +168,14 @@ class MainApp:
             self.get_settings()
             self.open_ds_button.show()
 
-            # Add a log statement
-            log.info(f"Site name updated to {self.site_name.value}")
-
         else:
             self.site_name.enable()
             self.submit_site_text = "Submit"
             self.open_ds_button.hide()
             self.open_db_button.hide()
 
-            # Add a log statement
-            log.info(f"Site name updated to {self.site_name.value}")
+        # Add a log statement
+        log.info(f"Site name updated to {self.site_name.value}")
 
         self.submit_site.text = self.submit_site_text
 

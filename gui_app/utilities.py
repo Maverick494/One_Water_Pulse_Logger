@@ -30,23 +30,24 @@ from os.path import exists
 
 
 class PopupHandler:
-    def popup_create(event):
-        popup_type = event["Type"]
-        popup_title = event["Title"]
-        popup_message = event["Message"]
+    def popup_create(self):
+        popup_type = self["Type"]
+        popup_title = self["Title"]
+        popup_message = self["Message"]
         valid_types = ["info", "error", "warn", "yesno"]
 
-        if popup_type in valid_types:
-            if popup_type == "info":
-                return info(popup_title, popup_message)
-            elif popup_type == "warn":
-                return warn(popup_title, popup_message)
-            elif popup_type == "error":
-                return error(popup_title, popup_message)
-            elif popup_type == "yesno":
-                return yesno(popup_title, popup_message)
-        else:
+        if popup_type in valid_types and popup_type == "error":
+            return error(popup_title, popup_message)
+        elif (
+            popup_type in valid_types
+            and popup_type == "info"
+            or popup_type not in valid_types
+        ):
             return info(popup_title, popup_message)
+        elif popup_type == "warn":
+            return warn(popup_title, popup_message)
+        elif popup_type == "yesno":
+            return yesno(popup_title, popup_message)
 
 
 class LoggerSettings:
@@ -90,7 +91,7 @@ class LoggerSettings:
 
             sf.close()
 
-            return {"Result": "Settings Saved to {}".format(json_file)}
+            return {"Result": f"Settings Saved to {json_file}"}
 
         except Exception as ex:
             return {"Error": str(ex)}
@@ -100,32 +101,30 @@ class LoggerSettings:
 
         json_file = LoggerSettings.settings_directory + site_name + LoggerSettings.settings_filename
 
-        if exists(json_file):
-            with open(json_file, "r") as json_data:
-                LoggerSettings.settings_json = json.load(json_data)
-
-            json_data.close()
-
-            return {"File Exists" : True}, LoggerSettings.settings_json
-
-        else:
+        if not exists(json_file):
             return {"File Exists" : False}, LoggerSettings.settings_json
+        with open(json_file, "r") as json_data:
+            LoggerSettings.settings_json = json.load(json_data)
+
+        json_data.close()
+
+        return {"File Exists" : True}, LoggerSettings.settings_json
 
 
 class StorageHandler:
     def __init__(self):
         self.settings = LoggerSettings.retrieve_settings()
 
-    def ftp_connection(HOST, PORT, USER, PASS):
+    def ftp_connection(self, PORT, USER, PASS):
         try:
             ftp = ftplib.FTP(source_address=())
-            ftp.connect(HOST, PORT)
+            ftp.connect(self, PORT)
             ftp.login(USER, PASS)
             ftp.set_pasv(False)
             ftp.set_debuglevel(3)
 
         except ftplib.all_errors as ex:
-            print(str(ex))
+            print(ex)
             raise
 
         return ftp
@@ -145,9 +144,10 @@ class StorageHandler:
         conn.close()
         return {"status": "success"}
 
-    def set_creds(access_key, secret_key, role_arn=None, session_name="AssumedSession"):
-        if role_arn is not None:
-            """
+    def set_creds(self, secret_key, role_arn=None, session_name="AssumedSession"):
+        if role_arn is None:
+            return boto3.client("s3", aws_access_key_id=self, secret_access_key=secret_key)
+        """
             Assumes an IAM role using IAM User's access and secret keys.
 
             Parameters:
@@ -159,34 +159,25 @@ class StorageHandler:
             Returns:
                 boto3.Session: A session with the assumed role credentials.
             """
-            sts_client = boto3.client(
-                "sts",
-                aws_access_key_id=access_key,
-                aws_secret_access_key=secret_key,
-                region_name="us-west-1",
-            )
+        sts_client = boto3.client(
+            "sts",
+            aws_access_key_id=self,
+            aws_secret_access_key=secret_key,
+            region_name="us-west-1",
+        )
 
-            # Assume the role
-            assumed_role = sts_client.assume_role(
-                RoleArn=role_arn, RoleSessionName=session_name
-            )
+        # Assume the role
+        assumed_role = sts_client.assume_role(
+            RoleArn=role_arn, RoleSessionName=session_name
+        )
 
-            # Create a new session with the assumed role credentials
-            assumed_credentials = assumed_role["Credentials"]
-            session = boto3.Session(
-                aws_access_key_id=assumed_credentials["AccessKeyId"],
-                aws_secret_access_key=assumed_credentials["SecretAccessKey"],
-                aws_session_token=assumed_credentials["SessionToken"],
-            )
-
-            return session
-
-        else:
-            s3 = boto3.client(
-                "s3", aws_access_key_id=access_key, secret_access_key=secret_key
-            )
-
-            return s3
+        # Create a new session with the assumed role credentials
+        assumed_credentials = assumed_role["Credentials"]
+        return boto3.Session(
+            aws_access_key_id=assumed_credentials["AccessKeyId"],
+            aws_secret_access_key=assumed_credentials["SecretAccessKey"],
+            aws_session_token=assumed_credentials["SessionToken"],
+        )
 
     def save_to_s3(self, data_file):
         settings = LoggerSettings.retrieve_settings()
@@ -206,9 +197,13 @@ class StorageHandler:
             aws_session.upload_file(
                 data_file,
                 Bucket=settings["Data Output"]["Bucket"],
-                Key=settings["Data Output"]["Prefix"]
-                + "dt={}/".format(dt.strftime(dt.today(), "%y%m%d"))
-                + data_file.split("/")[-1],
+                Key=(
+                    (
+                        settings["Data Output"]["Prefix"]
+                        + f'dt={dt.strftime(dt.now(), "%y%m%d")}/'
+                    )
+                    + data_file.split("/")[-1]
+                ),
                 config=Config(signature_version="s3v4"),
             )
 
