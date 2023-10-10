@@ -54,7 +54,6 @@ class DataLogger:
         dl.hour_total += flow
         dl.day_total += dl.hour_total
 
-    @staticmethod
     def save_logging():
         dl = DataLogger
         if dl.settings["Data Output"]["Location"] == "local":
@@ -87,7 +86,6 @@ class DataLogger:
             dl.hour_total = 0.0
             dl.day_total = 0.0
 
-    @staticmethod
     def update_logdata(d):
         dl = DataLogger
         dl.log_data = {
@@ -97,19 +95,17 @@ class DataLogger:
         }
         bdict(dl.log_data).merge(d, overwrite=True)
 
-    @staticmethod
     def start_logging():
         dl = DataLogger
+        print(dl.settings)
         dl.logger_run = True
         dl.curr_hour = dt.now().hour
 
-    @staticmethod
     def stop_logging():
         dl = DataLogger
         dl.logger_run = False
         dl.pi.stop()
 
-    @staticmethod
     def data_export():
         where_to = DataLogger.settings["Data Output"]["Location"]
 
@@ -119,13 +115,11 @@ class DataLogger:
             else:
                 StorageHandler.upload_to_ftp(DataLogger.file_for_load)
 
-    @staticmethod
     def write_log_to_file(dict_to_write):
         with open(DataLogger.file_for_load, "a") as lf:
             lf.write("{}\t{}\t{}\t{}\t{}\n").format(dict_to_write)
 
         lf.close()
 
-    @staticmethod
     def write_log_to_db(dict_to_write):
         Query.insert(dict_to_write)

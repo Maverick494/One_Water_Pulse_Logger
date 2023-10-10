@@ -140,7 +140,8 @@ class MainApp:
         self.app.display()
 
     def get_settings(self):
-        self.settings = LoggerSettings.retrieve_settings(self.site_name.value)
+        LoggerSettings.site_name = self.site_name.value
+        self.settings = LoggerSettings.retrieve_settings()
 
         if self.settings[0]["File Exists"]:
             load_settings = PopupHandler.popup_create(

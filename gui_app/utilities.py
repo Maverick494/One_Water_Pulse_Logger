@@ -97,20 +97,19 @@ class LoggerSettings:
             return {"Error": str(ex)}
 
     @classmethod
-    def retrieve_settings(site_name):
-        LoggerSettings.site_name = site_name
-        json_file = LoggerSettings.settings_directory + site_name + LoggerSettings.settings_filename
+    def retrieve_settings(cls):
+        json_file = cls.settings_directory + cls.site_name + cls.settings_filename
 
         if exists(json_file):
             with open(json_file, 'r') as json_data:
-                LoggerSettings.settings_json = json_data.read()
+                cls.settings_json = json_data.read()
 
             json_data.close()
 
-            return {"File Exists" : True}, LoggerSettings.settings_json
+            return {"File Exists" : True}, cls.settings_json
 
         else:
-            return {"File Exists" : False}, LoggerSettings.settings_json
+            return {"File Exists" : False}, cls.settings_json
 
 
 class StorageHandler:
