@@ -21,6 +21,7 @@ from utilities import LoggerSettings, PopupHandler
 
 
 class LoggerSetupPage:
+    
     def __init__(self, parent, main_app):
         self.parent = parent
         self.main_app = main_app

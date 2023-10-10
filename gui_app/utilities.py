@@ -50,6 +50,7 @@ class PopupHandler:
 
 
 class LoggerSettings:
+    site_name = ""
     settings_directory = "/home/ect-one-user/Desktop/One_Water_Pulse_Logger/config/"
     settings_filename = "_logger_config.json"
     settings_json = {}
@@ -59,7 +60,6 @@ class LoggerSettings:
         bdict(LoggerSettings.settings_json).merge(d, overwrite=True)
         print(LoggerSettings.settings_json)
 
-    @classmethod
     def check_json(cls):
         keys_to_get = ["Site Name", "Sensor", "Data Output"]
         keys_exist = []
@@ -95,14 +95,13 @@ class LoggerSettings:
         except Exception as ex:
             return {"Error": str(ex)}
 
-    @staticmethod
-    def retrieve_settings(site_name=None):
-
+    def retrieve_settings(site_name):
+        LoggerSettings.site_name = site_name
         json_file = LoggerSettings.settings_directory + site_name + LoggerSettings.settings_filename
 
         if exists(json_file):
-            with open(json_file, "r") as json_data:
-                LoggerSettings.settings_json = json.load(json_data)
+            with open(json_file, 'r') as json_data:
+                LoggerSettings.settings_json = json_data.read()
 
             json_data.close()
 
@@ -113,9 +112,10 @@ class LoggerSettings:
 
 
 class StorageHandler:
-    def __init__(self):
-        self.settings = LoggerSettings.retrieve_settings()
 
+    settings = LoggerSettings.settings_json
+
+    @classmethod
     def ftp_connection(HOST, PORT, USER, PASS):
         try:
             ftp = ftplib.FTP(source_address=())
@@ -130,12 +130,13 @@ class StorageHandler:
 
         return ftp
 
-    def save_to_ftp(self, data_file):
-        conn = self.ftp_connection(
-            self.settings["Data Output"]["Host"],
-            self.settings["Data Output"]["Port"],
-            self.settings["Data Output"]["Auth"]["Username"],
-            self.settings["Data Output"]["Auth"]["Password"],
+    @staticmethod
+    def save_to_ftp(data_file):
+        conn = LoggerSettings.ftp_connection(
+            LoggerSettings.settings_json["Data Output"]["Host"],
+            LoggerSettings.settings_json["Data Output"]["Port"],
+            LoggerSettings.settings_json["Data Output"]["Auth"]["Username"],
+            LoggerSettings.settings_json["Data Output"]["Auth"]["Password"],
         )
 
         with open(data_file, "rb") as df:
@@ -145,6 +146,7 @@ class StorageHandler:
         conn.close()
         return {"status": "success"}
 
+    @staticmethod
     def set_creds(access_key, secret_key, role_arn=None, session_name="AssumedSession"):
         if role_arn is not None:
             """
@@ -188,11 +190,11 @@ class StorageHandler:
 
             return s3
 
-    def save_to_s3(self, data_file):
-        settings = LoggerSettings.retrieve_settings()
+    def save_to_s3(data_file):
+        settings = LoggerSettings.settings_json
 
-        if self.settings["Data Output"]["Auth"]["Role"] is not None:
-            aws_session = self.set_creds(
+        if LoggerSettings.settings_json["Data Output"]["Auth"]["Role"] is not None:
+            aws_session = StorageHandler.set_creds(
                 settings["Data Output"]["Auth"]["Access Key"],
                 settings["Data Output"]["Auth"]["Secret Key"],
                 settings["Data Output"]["Auth"]["Role"],
