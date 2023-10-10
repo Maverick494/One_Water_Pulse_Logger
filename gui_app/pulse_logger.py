@@ -57,7 +57,6 @@ class DataLogger:
     @staticmethod
     def save_logging():
         dl = DataLogger
-        print(dl.settings)
         if dl.settings["Data Output"]["Location"] == "local":
             data_save = dl.write_log_to_db
         else:

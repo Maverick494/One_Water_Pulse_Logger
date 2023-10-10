@@ -60,6 +60,7 @@ class LoggerSettings:
         bdict(LoggerSettings.settings_json).merge(d, overwrite=True)
         print(LoggerSettings.settings_json)
 
+    @classmethod
     def check_json(cls):
         keys_to_get = ["Site Name", "Sensor", "Data Output"]
         keys_exist = []
@@ -95,6 +96,7 @@ class LoggerSettings:
         except Exception as ex:
             return {"Error": str(ex)}
 
+    @classmethod
     def retrieve_settings(site_name):
         LoggerSettings.site_name = site_name
         json_file = LoggerSettings.settings_directory + site_name + LoggerSettings.settings_filename
