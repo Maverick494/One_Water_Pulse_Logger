@@ -58,7 +58,6 @@ class LoggerSettings:
     @staticmethod
     def update_settings(d):
         bdict(LoggerSettings.settings_json).merge(d, overwrite=True)
-        print(LoggerSettings.settings_json)
 
     @classmethod
     def check_json(cls):

@@ -145,14 +145,14 @@ class DataDisplayPage:
         self.stop("Logging has been stopped due to leaving the Data Display Page")
 
     def start(self):
-        PopupHandler.popup_create({"Type": "info",
-                    "Title":"Logging Started",
-                    "Message": "Logging has been started"})
         DataLogger.start_logging()
         self.display_thread.start()
         self.save_logging_thread.start()
         self.display_thread_run = True
         self.save_logging_thread_run = True
+        PopupHandler.popup_create({"Type": "info",
+                    "Title":"Logging Started",
+                    "Message": "Logging has been started"})
         self.flow_rate.repeat(33, self.update_display)
         self.hourly_flow.repeat(33, self.update_display)
         self.daily_flow.repeat(33, self.update_display)
